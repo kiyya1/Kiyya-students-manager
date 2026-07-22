@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>የተማሪዎች ምዝገባ ፖርታል</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #eef2f3 0%, #8e9eab 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .form-card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 480px;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .form-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+        .form-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .form-header h2 {
+            color: #2c3e50;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .form-header p {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .nav-link {
+            display: block;
+            text-align: right;
+            color: #3498db;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            transition: color 0.2s;
+        }
+        .nav-link:hover {
+            color: #1d6fa5;
+            text-decoration: underline;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #34495e;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #2d3748;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+        input:focus, select:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+        }
+        button:hover {
+            background: linear-gradient(135deg, #27ae60, #219150);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(46, 204, 113, 0.4);
+        }
+        .success-alert {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-card">
+    <a href="/students" class="nav-link">የተመዘገቡ ተማሪዎችን ዝርዝር ይመልከቱ →</a>
+    
+    <div class="form-header">
+        <h2>የተማሪ ምዝገባ ፎርም</h2>
+        <p>እባክዎን የተማሪውን መረጃ በትክክል ይሙሉ</p>
+    </div>
+
+    {% if success %}
+        <div class="success-alert">{{ message }}</div>
+    {% endif %}
+
+    <form action="/register" method="POST">
+        <div class="form-group">
+            <label for="fullname">ሙሉ ስም</label>
+            <input type="text" id="fullname" name="fullname" required placeholder="ለምሳሌ፡ አበበ ከበደ">
+        </div>
+
+        <div class="form-group">
+            <label for="age">እድሜ</label>
+            <input type="number" id="age" name="age" required placeholder="እድሜ ያስገቡ">
+        </div>
+
+        <div class="form-group">
+            <label for="grade">ክፍል / ደረጃ</label>
+            <select id="grade" name="grade" required>
+                <option value="">ክፍል ይምረጡ...</option>
+                <option value="1ኛ ክፍል">1ኛ ክፍል</option>
+                <option value="2ኛ ክፍል">2ኛ ክፍል</option>
+                <option value="3ኛ ክፍል">3ኛ ክፍል</option>
+                <option value="4ኛ ክፍል">4ኛ ክፍል</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="parent_phone">የወላጅ ስልክ ቁጥር</label>
+            <input type="tel" id="parent_phone" name="parent_phone" required placeholder="0911223344">
+        </div>
+
+        <button type="submit">ተማሪ መዝግብ</button>
+    </form>
+</div>
+
+</body>
+</html>

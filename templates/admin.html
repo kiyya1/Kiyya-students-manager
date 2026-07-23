@@ -16,13 +16,50 @@
     <div class="d-flex justify-content-between align-items-center mb-4 no-print">
       <h2>📊 Admin Dashboard</h2>
       <div>
-        <a href="/" class="btn btn-outline-primary me-2">➕ አዲስ ተማሪ መመዝገቢያ</a>
+        <a href="/" class="btn btn-outline-primary me-2">➕ ምዝገባ ገፅ</a>
         <a href="/export_excel" class="btn btn-success me-2">📥 Export Excel</a>
         <button onclick="window.print()" class="btn btn-secondary me-2">🖨️ Print List</button>
         <a href="/logout" class="btn btn-danger">Logout</a>
       </div>
     </div>
 
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show no-print" role="alert">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Payment Fee & Capacity Settings Section -->
+    <div class="card shadow-sm mb-4 no-print">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">⚙️ የክፍያ ተመኖች እና የክፍል አቅም ማስተካከያ (Settings)</h5>
+      </div>
+      <div class="card-body">
+        <form action="/update_settings" method="POST" class="row g-3 align-items-center">
+          <div class="col-md-3">
+            <label class="form-label">የወር ክፍያ (ETB)</label>
+            <input type="number" step="0.01" name="monthly_fee" class="form-control" value="{{ settings.monthly_fee }}" required>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">የተርም ክፍያ (ETB)</label>
+            <input type="number" step="0.01" name="term_fee" class="form-control" value="{{ settings.term_fee }}" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">በአንድ ሴክሽን ከፍተኛ የተማሪ ብዛት</label>
+            <input type="number" name="class_capacity" class="form-control" value="{{ settings.class_capacity }}" required placeholder="ምሳሌ፡ 30">
+          </div>
+          <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-warning w-100">አድስ (Update)</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Student List Table -->
     <div class="card shadow-sm">
       <div class="card-header bg-dark text-white">
         <h5 class="mb-0">የተመዘገቡ ተማሪዎች ዝርዝር</h5>
@@ -35,6 +72,7 @@
                 <th>ID</th>
                 <th>ስም</th>
                 <th>ክፍል</th>
+                <th>ሴክሽን</th>
                 <th>ስልክ</th>
                 <th>አድራሻ</th>
                 <th>ክፍያ መንገድ</th>
@@ -48,7 +86,8 @@
               <tr>
                 <td>{{ student.id }}</td>
                 <td><strong>{{ student.full_name }}</strong></td>
-                <td>{{ student.grade }} {{ student.section }}</td>
+                <td>{{ student.grade }}</td>
+                <td><span class="badge bg-success">{{ student.section }}</span></td>
                 <td>{{ student.phone }}</td>
                 <td>{{ student.address }}</td>
                 <td>{{ student.payment_method }}</td>
@@ -58,7 +97,7 @@
               </tr>
               {% else %}
               <tr>
-                <td colspan="9" class="text-center text-muted">ምንም የተመዘገበ ተማሪ የለም።</td>
+                <td colspan="10" class="text-center text-muted">ምንም የተመዘገበ ተማሪ የለም።</td>
               </tr>
               {% endfor %}
             </tbody>

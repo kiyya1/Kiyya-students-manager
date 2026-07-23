@@ -2,11 +2,20 @@
 <html lang="am">
 <head>
   <meta charset="UTF-8">
-  <title>Admin Dashboard - Student Manager</title>
+  <title>Admin Dashboard - Financial Oversight</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     @media print {
       .no-print { display: none !important; }
+    }
+    .metric-card {
+      border-radius: 12px;
+      border: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      transition: transform 0.2s;
+    }
+    .metric-card:hover {
+      transform: translateY(-2px);
     }
   </style>
 </head>
@@ -14,11 +23,11 @@
 
   <div class="container my-4">
     <div class="d-flex justify-content-between align-items-center mb-4 no-print">
-      <h2>📊 Admin Dashboard</h2>
+      <h2>📊 Admin Financial Dashboard</h2>
       <div>
         <a href="/" class="btn btn-outline-primary me-2">➕ ምዝገባ ገፅ</a>
-        <a href="/export_excel" class="btn btn-success me-2">📥 Export Excel</a>
-        <button onclick="window.print()" class="btn btn-secondary me-2">🖨️ Print List</button>
+        <a href="/export_excel" class="btn btn-success me-2">📥 Export Excel Spreadsheet</a>
+        <button onclick="window.print()" class="btn btn-secondary me-2">🖨️ Print Report</button>
         <a href="/logout" class="btn btn-danger">Logout</a>
       </div>
     </div>
@@ -33,10 +42,38 @@
       {% endif %}
     {% endwith %}
 
-    <!-- Payment, Capacity & Default Address Settings -->
+    <!-- FINANCIAL SUMMARY DASHBOARD CARDS -->
+    <div class="row g-3 mb-4 no-print">
+      <div class="col-md-3">
+        <div class="card metric-card bg-white p-3 border-start border-primary border-4">
+          <small class="text-muted text-uppercase fw-bold">ጠቅላላ ተማሪዎች</small>
+          <h3 class="mb-0 text-dark fw-bold mt-1">{{ total_students }}</h3>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card metric-card bg-white p-3 border-start border-info border-4">
+          <small class="text-muted text-uppercase fw-bold">ጠቅላላ የሚጠበቅ ክፍያ (Total Expected)</small>
+          <h3 class="mb-0 text-info fw-bold mt-1">{{ "{:,.2f}".format(total_expected) }} ETB</h3>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card metric-card bg-white p-3 border-start border-success border-4">
+          <small class="text-muted text-uppercase fw-bold">የተሰበሰበ ገንዘብ (Total Paid)</small>
+          <h3 class="mb-0 text-success fw-bold mt-1">{{ "{:,.2f}".format(total_paid) }} ETB</h3>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card metric-card bg-white p-3 border-start border-danger border-4">
+          <small class="text-muted text-uppercase fw-bold">ያልተከፈለ / የቀረ ገንዘብ (Unpaid)</small>
+          <h3 class="mb-0 text-danger fw-bold mt-1">{{ "{:,.2f}".format(total_unpaid) }} ETB</h3>
+        </div>
+      </div>
+    </div>
+
+    <!-- SYSTEM SETTINGS -->
     <div class="card shadow-sm mb-4 no-print">
-      <div class="card-header bg-primary text-white">
-        <h5 class="mb-0">⚙️ የሲስተም ቅንብሮች (System Settings)</h5>
+      <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">⚙️ የሲስተም ቅንብሮች (Settings)</h5>
       </div>
       <div class="card-body">
         <form action="/update_settings" method="POST" class="row g-3 align-items-center">
@@ -57,51 +94,57 @@
             <input type="text" name="default_address" class="form-control" value="{{ settings.default_address if settings and settings.default_address else 'አቃቂ ቃሊቲ ወረዳ 09' }}" required>
           </div>
           <div class="col-md-12 text-end">
-            <button type="submit" class="btn btn-warning px-4">ቅንብሩን አድስ (Save Settings)</button>
+            <button type="submit" class="btn btn-primary px-4">ቅንብሩን አድስ (Save Settings)</button>
           </div>
         </form>
       </div>
     </div>
 
-    <!-- Student List Table -->
+    <!-- FINANCIAL BREAKDOWN TABLE -->
     <div class="card shadow-sm">
-      <div class="card-header bg-dark text-white">
-        <h5 class="mb-0">የተመዘገቡ ተማሪዎች ዝርዝር</h5>
+      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">📋 የተማሪዎች ክፍያ ዝርዝር (Payment Details)</h5>
       </div>
-      <div class="card-body">
+      <div class="card-body p-0">
         <div class="table-responsive">
-          <table class="table table-bordered table-striped align-middle">
-            <thead>
+          <table class="table table-striped align-middle mb-0">
+            <thead class="table-dark">
               <tr>
                 <th>ID</th>
-                <th>ስም</th>
-                <th>ክፍል</th>
-                <th>ሴክሽን</th>
+                <th>ተማሪ ስም</th>
+                <th>ክፍል / ሴክሽን</th>
                 <th>ስልክ</th>
                 <th>አድራሻ</th>
-                <th>ክፍያ መንገድ</th>
-                <th>ገንዘብ (ETB)</th>
-                <th>ክፍያ አይነት</th>
-                <th>FT / Ref No</th>
+                <th>የክፍያ አይነት</th>
+                <th>አጠቃላይ (Total)</th>
+                <th>የተከፈለ (Paid)</th>
+                <th>ቀሪ (Remaining)</th>
+                <th>FT Ref</th>
               </tr>
             </thead>
             <tbody>
-              {% for student in students %}
+              {% for item in student_data %}
               <tr>
-                <td>{{ student.id }}</td>
-                <td><strong>{{ student.full_name }}</strong></td>
-                <td>{{ student.grade }}</td>
-                <td><span class="badge bg-success">{{ student.section }}</span></td>
-                <td>{{ student.phone }}</td>
-                <td>{{ student.address }}</td>
-                <td>{{ student.payment_method }}</td>
-                <td>{{ student.amount }}</td>
-                <td><span class="badge bg-info text-dark">{{ student.payment_type }}</span></td>
-                <td>{{ student.ft_approval_no }}</td>
+                <td>{{ item.student.id }}</td>
+                <td><strong>{{ item.student.full_name }}</strong></td>
+                <td>{{ item.student.grade }} <span class="badge bg-secondary">{{ item.student.section }}</span></td>
+                <td>{{ item.student.phone }}</td>
+                <td>{{ item.student.address }}</td>
+                <td><span class="badge bg-info text-dark">{{ item.student.payment_type }}</span></td>
+                <td class="fw-bold">{{ "{:,.2f}".format(item.expected) }} ETB</td>
+                <td class="text-success fw-bold">{{ "{:,.2f}".format(item.paid) }} ETB</td>
+                <td>
+                  {% if item.remaining > 0 %}
+                    <span class="badge bg-danger fs-6">{{ "{:,.2f}".format(item.remaining) }} ETB</span>
+                  {% else %}
+                    <span class="badge bg-success fs-6">ሙሉ በሙሉ ተከፍሏል</span>
+                  {% endif %}
+                </td>
+                <td><small class="text-muted">{{ item.student.ft_approval_no }}</small></td>
               </tr>
               {% else %}
               <tr>
-                <td colspan="10" class="text-center text-muted">ምንም የተመዘገበ ተማሪ የለም።</td>
+                <td colspan="10" class="text-center text-muted p-4">ምንም የተመዘገበ ተማሪ የለም።</td>
               </tr>
               {% endfor %}
             </tbody>

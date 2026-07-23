@@ -7,7 +7,7 @@
 </head>
 <body class="bg-light">
 
-  <div class="container my-5" style="max-width: 700px;">
+  <div class="container my-5" style="max-width: 750px;">
     
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h2>🎓 የተማሪዎች ምዝገባ ቅጽ</h2>
@@ -71,17 +71,23 @@
             </div>
 
             <div class="col-md-4">
-              <label class="form-label">የሚከፈለው ሂሳብ (ETB)</label>
-              <input type="text" id="amountDisplay" class="form-control fw-bold text-success" value="{{ settings.monthly_fee if settings else '3000' }} ETB" readonly>
+              <label class="form-label">የሚጠበቅ ክፍያ (ETB)</label>
+              <input type="text" id="amountDisplay" class="form-control fw-bold text-primary" value="{{ settings.monthly_fee if settings else '3000' }} ETB" readonly>
             </div>
           </div>
 
-          <div class="mb-3">
-            <label class="form-label">FT / Reference Approval No.</label>
-            <input type="text" name="ft_approval_no" class="form-control" placeholder="ምሳሌ፡ FT240723XXXX" required>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold text-success">አሁን የከፈሉት መጠን (ETB)</label>
+              <input type="number" step="0.01" name="amount_paid" id="amountPaidInput" class="form-control border-success fw-bold" value="{{ settings.monthly_fee if settings else 3000 }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">FT / Reference Approval No.</label>
+              <input type="text" name="ft_approval_no" class="form-control" placeholder="ምሳሌ፡ FT240723XXXX" required>
+            </div>
           </div>
 
-          <button type="submit" class="btn btn-success w-100 btn-lg">መዝግብ</button>
+          <button type="submit" class="btn btn-success w-100 btn-lg mt-3">መዝግብ</button>
         </form>
       </div>
     </div>
@@ -95,10 +101,14 @@
     function updateAmount() {
       const selected = document.getElementById('paymentTypeSelect').value;
       const display = document.getElementById('amountDisplay');
+      const paidInput = document.getElementById('amountPaidInput');
+      
       if (selected === 'Term (3 Months)') {
         display.value = termFee + ' ETB';
+        paidInput.value = termFee;
       } else {
         display.value = monthlyFee + ' ETB';
+        paidInput.value = monthlyFee;
       }
     }
   </script>

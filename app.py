@@ -5,6 +5,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, sen
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
 app = Flask(__name__)
 app.secret_key = 'kiyya_secret_key_change_this'
@@ -34,7 +35,7 @@ class Student(db.Model):
     address = db.Column(db.String(200), nullable=True)
     payment_method = db.Column(db.String(50), nullable=True)
     ft_approval_no = db.Column(db.String(100), nullable=True)
-    amount = db.Column(db.Float, nullable=True)
+    amount_paid = db.Column(db.Float, default=0.0)  # የከፈለው መጠን
     payment_type = db.Column(db.String(50), nullable=True)
 
 class Setting(db.Model):
@@ -53,7 +54,6 @@ with app.app_context():
         db.session.add(default_admin)
         db.session.commit()
     
-    # Check and initialize Settings
     settings = Setting.query.first()
     if not settings:
         default_settings = Setting(
@@ -80,9 +80,9 @@ def add_student():
     payment_method = request.form.get('payment_method')
     ft_approval_no = request.form.get('ft_approval_no')
     payment_type = request.form.get('payment_type')
+    amount_paid = float(request.form.get('amount_paid', 0))
     
     settings = Setting.query.first()
-    amount = settings.term_fee if payment_type == 'Term (3 Months)' else settings.monthly_fee
 
     # Automatic Section Assignment Logic (A, B, C...)
     existing_count = Student.query.filter_by(grade=grade).count()
@@ -99,7 +99,7 @@ def add_student():
         address=address,
         payment_method=payment_method,
         ft_approval_no=ft_approval_no,
-        amount=amount,
+        amount_paid=amount_paid,
         payment_type=payment_type
     )
     db.session.add(new_student)
@@ -126,9 +126,39 @@ def login():
 def admin_dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login'))
+    
     students = Student.query.all()
     settings = Setting.query.first()
-    return render_template('admin.html', students=students, settings=settings)
+    
+    # Financial Analytics Calculation
+    total_expected = 0.0
+    total_paid = 0.0
+    
+    student_data = []
+    for s in students:
+        expected = settings.term_fee if s.payment_type == 'Term (3 Months)' else settings.monthly_fee
+        paid = s.amount_paid or 0.0
+        remaining = expected - paid
+        
+        total_expected += expected
+        total_paid += paid
+        
+        student_data.append({
+            'student': s,
+            'expected': expected,
+            'paid': paid,
+            'remaining': remaining
+        })
+
+    total_unpaid = total_expected - total_paid
+
+    return render_template('admin.html', 
+                           student_data=student_data, 
+                           settings=settings,
+                           total_expected=total_expected,
+                           total_paid=total_paid,
+                           total_unpaid=total_unpaid,
+                           total_students=len(students))
 
 @app.route('/update_settings', methods=['POST'])
 def update_settings():
@@ -161,14 +191,73 @@ def export_excel():
         return redirect(url_for('login'))
 
     students = Student.query.all()
+    settings = Setting.query.first()
+    
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = "Students List"
+    ws.title = "Financial Summary"
 
-    ws.append(["ID", "Full Name", "Grade", "Section", "Phone", "Address", "Payment Method", "FT Ref No", "Amount", "Payment Type"])
+    # Styling Definitions
+    header_fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
+    header_font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
+    bold_font = Font(name="Calibri", size=11, bold=True)
+    border = Border(
+        left=Side(style='thin', color='D9D9D9'),
+        right=Side(style='thin', color='D9D9D9'),
+        top=Side(style='thin', color='D9D9D9'),
+        bottom=Side(style='thin', color='D9D9D9')
+    )
 
+    headers = [
+        "ID", "Full Name", "Grade", "Section", "Phone", "Address", 
+        "Payment Method", "FT Ref No", "Payment Type", 
+        "Total Fee Required (ETB)", "Amount Paid (ETB)", "Remaining Balance (ETB)"
+    ]
+    ws.append(headers)
+
+    # Apply Header Styles
+    for col_num in range(1, len(headers) + 1):
+        cell = ws.cell(row=1, column=col_num)
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+
+    # Populate Data
+    start_row = 2
     for s in students:
-        ws.append([s.id, s.full_name, s.grade, s.section, s.phone, s.address, s.payment_method, s.ft_approval_no, s.amount, s.payment_type])
+        expected = settings.term_fee if s.payment_type == 'Term (3 Months)' else settings.monthly_fee
+        paid = s.amount_paid or 0.0
+        remaining = expected - paid
+
+        row_data = [
+            s.id, s.full_name, s.grade, s.section, s.phone, s.address,
+            s.payment_method, s.ft_approval_no, s.payment_type,
+            expected, paid, remaining
+        ]
+        ws.append(row_data)
+
+    end_row = start_row + len(students) - 1
+
+    # Add Totals Row if there are students
+    if len(students) > 0:
+        total_row = [
+            "", "TOTAL", "", "", "", "", "", "", "",
+            f"=SUM(J2:J{end_row})", f"=SUM(K2:K{end_row})", f"=SUM(L2:L{end_row})"
+        ]
+        ws.append(total_row)
+        
+        # Style Total Row
+        last_r = ws.max_row
+        for c in range(1, len(headers) + 1):
+            cell = ws.cell(row=last_r, column=c)
+            cell.font = bold_font
+            cell.fill = PatternFill(start_color="F2F2F2", fill_type="solid")
+
+    # Format Column Widths automatically
+    for col in ws.columns:
+        max_len = max(len(str(cell.value or '')) for cell in col)
+        col_letter = openpyxl.utils.get_column_letter(col[0].column)
+        ws.column_dimensions[col_letter].width = max(max_len + 3, 12)
 
     output = io.BytesIO()
     wb.save(output)
@@ -178,7 +267,7 @@ def export_excel():
         output,
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         as_attachment=True,
-        download_name="students_list.xlsx"
+        download_name="Student_Financial_Report.xlsx"
     )
 
 if __name__ == '__main__':

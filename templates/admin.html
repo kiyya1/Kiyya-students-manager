@@ -23,7 +23,7 @@
 
   <div class="container my-4">
     <div class="d-flex justify-content-between align-items-center mb-4 no-print">
-      <h2>📊 Admin Financial Dashboard</h2>
+      <h2>📊 Admin Dashboard</h2>
       <div>
         <a href="/" class="btn btn-outline-primary me-2">➕ ምዝገባ ገፅ</a>
         <a href="/export_excel" class="btn btn-success me-2">📥 Export Excel Spreadsheet</a>
@@ -66,6 +66,53 @@
         <div class="card metric-card bg-white p-3 border-start border-danger border-4">
           <small class="text-muted text-uppercase fw-bold">ያልተከፈለ / የቀረ ገንዘብ (Unpaid)</small>
           <h3 class="mb-0 text-danger fw-bold mt-1">{{ "{:,.2f}".format(total_unpaid) }} ETB</h3>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADMIN MANAGEMENT: CHANGE PASSWORD & CREATE NEW ADMIN -->
+    <div class="row g-3 mb-4 no-print">
+      <!-- Change Password Card -->
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-warning text-dark fw-bold">
+            🔒 የይለፍ ቃል መቀየሪያ (Change Password)
+          </div>
+          <div class="card-body">
+            <form action="/change_password" method="POST">
+              <div class="mb-3">
+                <label class="form-label">የድሮው የይለፍ ቃል (Current Password)</label>
+                <input type="password" name="old_password" class="form-control" required placeholder="የአሁኑን ፓስወርድ ያስገቡ">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">አዲሱ የይለፍ ቃል (New Password)</label>
+                <input type="password" name="new_password" class="form-control" required placeholder="አዲሱን ፓስወርድ ያስገቡ">
+              </div>
+              <button type="submit" class="btn btn-warning w-100 fw-bold">ፓስወርድ ቀይር</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Create New Admin Card -->
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-success text-white fw-bold">
+            👤 አዲስ Admin መመዝገቢያ (Create New Admin)
+          </div>
+          <div class="card-body">
+            <form action="/create_admin" method="POST">
+              <div class="mb-3">
+                <label class="form-label">አዲስ Username</label>
+                <input type="text" name="new_username" class="form-control" required placeholder="ለምሳሌ፡ admin2">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">የይለፍ ቃል (Password)</label>
+                <input type="password" name="new_password" class="form-control" required placeholder="ምስጢራዊ ቁጥር ያስገቡ">
+              </div>
+              <button type="submit" class="btn btn-success w-100 fw-bold">አዲስ Admin ፍጠር</button>
+            </form>
+          </div>
         </div>
       </div>
     </div>

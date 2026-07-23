@@ -107,7 +107,7 @@ def add_student():
     flash(f'ምዝገባዎ በስኬት ተጠናቋል! የተመደቡበት ሴክሽን፦ {assigned_section}', 'success')
     return redirect(url_for('register_page'))
 
-# --- Admin Section ---
+# --- Admin Auth Section ---
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -121,6 +121,46 @@ def login():
         else:
             flash('የተሳሳተ Username ወይም Password!', 'danger')
     return render_template('login.html')
+
+# --- Add New Admin / Register ---
+@app.route('/create_admin', methods=['POST'])
+def create_admin():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    new_username = request.form.get('new_username')
+    new_password = request.form.get('new_password')
+    
+    existing_user = User.query.filter_by(username=new_username).first()
+    if existing_user:
+        flash('ይህ Username አስቀድሞ ተይዟል! እባክህ ሌላ ይምረጡ።', 'danger')
+    else:
+        hashed_pw = generate_password_hash(new_password)
+        new_user = User(username=new_username, password_hash=hashed_pw)
+        db.session.add(new_user)
+        db.session.commit()
+        flash(f'አዲስ Admin ({new_username}) በስኬት ተፈጥሯል!', 'success')
+        
+    return redirect(url_for('admin_dashboard'))
+
+# --- Edit / Change Password ---
+@app.route('/change_password', methods=['POST'])
+def change_password():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    current_user = User.query.get(session['user_id'])
+    old_password = request.form.get('old_password')
+    new_password = request.form.get('new_password')
+    
+    if check_password_hash(current_user.password_hash, old_password):
+        current_user.password_hash = generate_password_hash(new_password)
+        db.session.commit()
+        flash('የይለፍ ቃልህ (Password) በስኬት ተቀይሯል!', 'success')
+    else:
+        flash('የድሮው የይለፍ ቃል የተሳሳተ ነው!', 'danger')
+        
+    return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin')
 def admin_dashboard():

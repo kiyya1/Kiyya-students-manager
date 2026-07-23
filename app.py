@@ -1,6 +1,7 @@
 import os
 import io
 import string
+from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash, send_file, session
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -32,23 +33,23 @@ class Student(db.Model):
     grade = db.Column(db.String(20), nullable=False)
     section = db.Column(db.String(10), default='A')
     phone = db.Column(db.String(20), nullable=True)
+    bus_service = db.Column(db.String(50), default='አልፈልግም (No Bus)')
     address = db.Column(db.String(200), nullable=True)
     payment_method = db.Column(db.String(50), nullable=True)
     ft_approval_no = db.Column(db.String(100), nullable=True)
     amount_paid = db.Column(db.Float, default=0.0)
     payment_type = db.Column(db.String(50), nullable=True)
     status = db.Column(db.String(20), default='Pending')
+    date_registered = db.Column(db.String(50), default=lambda: datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
 class Setting(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     monthly_fee = db.Column(db.Float, default=3000.0)
     term_fee = db.Column(db.Float, default=8000.0)
+    bus_fee = db.Column(db.Float, default=1500.0) # <--- NEW SCHOOL BUS FEE SETTING
     class_capacity = db.Column(db.Integer, default=30)
+    plan_target_per_grade = db.Column(db.Integer, default=50)
     default_address = db.Column(db.String(200), default="አቃቂ ቃሊቲ ወረዳ 09")
-    cbo_acc = db.Column(db.String(100), default="1000123456789 (Coop Bank)")
-    cbe_acc = db.Column(db.String(100), default="1000987654321 (CBE)")
-    telebirr_acc = db.Column(db.String(100), default="0911000000 (Telebirr)")
-    awash_acc = db.Column(db.String(100), default="0132000000000 (Awash Bank)")
 
 with app.app_context():
     db.create_all()
@@ -70,6 +71,7 @@ def add_student():
     full_name = request.form.get('full_name')
     grade = request.form.get('grade')
     phone = request.form.get('phone')
+    bus_service = request.form.get('bus_service', 'አልፈልግም (No Bus)')
     address = request.form.get('address')
     payment_method = request.form.get('payment_method')
     ft_approval_no = request.form.get('ft_approval_no')
@@ -85,9 +87,9 @@ def add_student():
 
     new_student = Student(
         full_name=full_name, grade=grade, section=assigned_section,
-        phone=phone, address=address, payment_method=payment_method,
-        ft_approval_no=ft_approval_no, amount_paid=amount_paid,
-        payment_type=payment_type, status='Pending'
+        phone=phone, bus_service=bus_service, address=address,
+        payment_method=payment_method, ft_approval_no=ft_approval_no,
+        amount_paid=amount_paid, payment_type=payment_type, status='Pending'
     )
     db.session.add(new_student)
     db.session.commit()
@@ -117,8 +119,17 @@ def admin_dashboard():
     total_paid = 0.0
     student_data = []
     
+    grades_list = [f"{i}st Grade" if i==1 else f"{i}nd Grade" if i==2 else f"{i}rd Grade" if i==3 else f"{i}th Grade" for i in range(1, 13)]
+    grade_stats = {g: 0 for g in grades_list}
+
     for s in students:
-        expected = settings.term_fee if (s.payment_type and 'Term' in s.payment_type) else settings.monthly_fee
+        # Calculate Base Tuition Fee
+        base_fee = settings.term_fee if (s.payment_type and 'Term' in s.payment_type) else settings.monthly_fee
+        
+        # Add Bus Fee if student selected Bus Service
+        bus_addon = settings.bus_fee if (s.bus_service and ('Yes' in s.bus_service or 'እፈልጋለሁ' in s.bus_service)) else 0.0
+        
+        expected = base_fee + bus_addon
         paid = s.amount_paid or 0.0
         remaining = max(0.0, expected - paid)
         
@@ -126,15 +137,20 @@ def admin_dashboard():
         total_paid += paid
         
         student_data.append({
-            'student': s, 'expected': expected, 'paid': paid, 'remaining': remaining
+            'student': s, 'expected': expected, 'paid': paid, 'remaining': remaining, 'bus_addon': bus_addon
         })
 
+        if s.grade in grade_stats:
+            grade_stats[s.grade] += 1
+
     total_unpaid = max(0.0, total_expected - total_paid)
+    plan_target = settings.plan_target_per_grade or 50
 
     return render_template('admin.html', 
                            student_data=student_data, settings=settings,
                            total_expected=total_expected, total_paid=total_paid,
-                           total_unpaid=total_unpaid, total_students=len(students))
+                           total_unpaid=total_unpaid, total_students=len(students),
+                           grade_stats=grade_stats, plan_target=plan_target)
 
 @app.route('/approve_student/<int:id>')
 def approve_student(id):
@@ -169,12 +185,10 @@ def update_settings():
     settings = Setting.query.first()
     settings.monthly_fee = float(request.form.get('monthly_fee', 3000))
     settings.term_fee = float(request.form.get('term_fee', 8000))
+    settings.bus_fee = float(request.form.get('bus_fee', 1500)) # <--- UPDATE BUS FEE
     settings.class_capacity = int(request.form.get('class_capacity', 30))
+    settings.plan_target_per_grade = int(request.form.get('plan_target_per_grade', 50))
     settings.default_address = request.form.get('default_address')
-    settings.cbo_acc = request.form.get('cbo_acc')
-    settings.cbe_acc = request.form.get('cbe_acc')
-    settings.telebirr_acc = request.form.get('telebirr_acc')
-    settings.awash_acc = request.form.get('awash_acc')
     db.session.commit()
     flash('ቅንብሮች በስኬት ተቀይረዋል!', 'success')
     return redirect(url_for('admin_dashboard'))
@@ -197,7 +211,7 @@ def logout():
     flash('ወጥተዋል!', 'info')
     return redirect(url_for('login'))
 
-# --- ADVANCED MULTI-SHEET EXPORT FEATURE ---
+# --- EXECUTIVE MULTI-SHEET EXPORT FEATURE ---
 @app.route('/export_excel')
 def export_excel():
     if 'user_id' not in session: return redirect(url_for('login'))
@@ -206,29 +220,40 @@ def export_excel():
     settings = Setting.query.first()
     
     wb = openpyxl.Workbook()
-    # Remove default sheet
     default_sheet = wb.active
     
-    # 1. OVERALL SUMMARY SHEET
-    ws_summary = wb.create_sheet(title="Overall Summary")
-    ws_summary.append(["School Registration & Financial Summary Report"])
-    ws_summary.append([])
-    ws_summary.append(["Metric", "Value"])
-    
-    total_expected = sum(settings.term_fee if (s.payment_type and 'Term' in s.payment_type) else settings.monthly_fee for s in students)
-    total_paid = sum(s.amount_paid or 0.0 for s in students)
-    total_unpaid = max(0.0, total_expected - total_paid)
-    
-    ws_summary.append(["Total Registered Students", len(students)])
-    ws_summary.append(["Total Expected Income (ETB)", total_expected])
-    ws_summary.append(["Total Collected Revenue (ETB)", total_paid])
-    ws_summary.append(["Total Outstanding Unpaid (ETB)", total_unpaid])
-
-    # Styling Header
     header_fill = PatternFill(start_color="1F4E79", end_color="1F4E79", fill_type="solid")
     header_font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
+
+    # SHEET 1: Search Dashboard
+    ws_dash = wb.create_sheet(title="🔍 Search Dashboard")
+    ws_dash.append(["🎓 Wabi School — Executive Dashboard & Analytics"])
+    ws_dash.append([])
+    ws_dash.append(["🔍 Search by FT / Transaction ID", "", "", "", "📊 Student Registration Plan vs Actual Report"])
     
-    # Group students by Grade & Section (e.g. "Grade 1 - A")
+    target_plan = settings.plan_target_per_grade or 50
+    grades_list = [f"{i}st Grade" if i==1 else f"{i}nd Grade" if i==2 else f"{i}rd Grade" if i==3 else f"{i}th Grade" for i in range(1, 13)]
+    
+    ws_dash.append(["የ FT ቁጥር ያስገቡ፦", "", "", "", "ክፍል (Grade)", "የታቀደ (Plan Target)", "የተመዘገበ (Registered)", "የተመዘገበ % (Completion)"])
+    
+    for idx, g in enumerate(grades_list):
+        reg_count = sum(1 for s in students if s.grade == g)
+        pct = (reg_count / target_plan) if target_plan > 0 else 0
+        ws_dash.append(["", "", "", "", g, target_plan, reg_count, round(pct, 4)])
+
+    # SHEET 2: All Students
+    ws_all = wb.create_sheet(title="All Students")
+    headers_all = ["ተ.ቁ (ID)", "ሙሉ ስም", "ስልክ ቁጥር", "ክፍል (Grade)", "ሴክሽን", "ስኩል ባስ", "አድራሻ", "ትራንዛክሽን ቁጥር", "የተከፈለ (ETB)", "የክፍያ ሁኔታ", "የተመዘገበበት ቀን"]
+    ws_all.append(headers_all)
+    for col_num in range(1, len(headers_all) + 1):
+        cell = ws_all.cell(row=1, column=col_num)
+        cell.fill = header_fill
+        cell.font = header_font
+
+    for s in students:
+        ws_all.append([s.id, s.full_name, s.phone, s.grade, s.section, s.bus_service, s.address, s.ft_approval_no, s.amount_paid, s.status, s.date_registered])
+
+    # SHEETS FOR EACH SECTION
     section_groups = {}
     for s in students:
         sec_key = f"{s.grade} - {s.section if s.section else 'A'}"
@@ -236,34 +261,18 @@ def export_excel():
             section_groups[sec_key] = []
         section_groups[sec_key].append(s)
 
-    # 2. CREATE A SEPARATE SHEET FOR EACH CLASS/SECTION
-    headers = ["#", "Full Name", "Grade", "Section", "Phone Number", "Address", "Payment Method", "FT Ref No", "Payment Option", "Expected (ETB)", "Paid (ETB)", "Remaining (ETB)", "Status"]
-    
     for sec_name, std_list in sorted(section_groups.items()):
-        # Clean sheet title (max 31 chars)
         sheet_title = sec_name.replace(":", "").replace("/", "-")[:30]
         ws = wb.create_sheet(title=sheet_title)
+        ws.append(headers_all)
         
-        ws.append(headers)
-        
-        # Apply Header Style
-        for col_num in range(1, len(headers) + 1):
+        for col_num in range(1, len(headers_all) + 1):
             cell = ws.cell(row=1, column=col_num)
             cell.fill = header_fill
             cell.font = header_font
-            cell.alignment = Alignment(horizontal="center", vertical="center")
 
-        for idx, s in enumerate(std_list, start=1):
-            exp = settings.term_fee if (s.payment_type and 'Term' in s.payment_type) else settings.monthly_fee
-            pd = s.amount_paid or 0.0
-            rem = max(0.0, exp - pd)
-            ws.append([idx, s.full_name, s.grade, s.section, s.phone, s.address, s.payment_method, s.ft_approval_no, s.payment_type, exp, pd, rem, s.status])
-
-        # Auto-adjust column widths
-        for col in ws.columns:
-            max_len = max(len(str(cell.value or '')) for cell in col)
-            col_letter = openpyxl.utils.get_column_letter(col[0].column)
-            ws.column_dimensions[col_letter].width = max(max_len + 3, 12)
+        for s in std_list:
+            ws.append([s.id, s.full_name, s.phone, s.grade, s.section, s.bus_service, s.address, s.ft_approval_no, s.amount_paid, s.status, s.date_registered])
 
     wb.remove(default_sheet)
 
@@ -271,7 +280,7 @@ def export_excel():
     wb.save(output)
     output.seek(0)
 
-    return send_file(output, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", as_attachment=True, download_name="Students_Section_Report.xlsx")
+    return send_file(output, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", as_attachment=True, download_name="Wabi_School_Executive_Dashboard.xlsx")
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

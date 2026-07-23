@@ -2,142 +2,214 @@
 <html lang="am">
 <head>
   <meta charset="UTF-8">
-  <title>Admin Dashboard - Financial Oversight</title>
+  <title>የአስተዳዳሪ መቆጣጠሪያ ሰሌዳ (Admin Dashboard)</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
+    /* ህትመት (PRINT) በሚደረግበት ጊዜ ብቻ የሚሰሩ ስታይሎች */
     @media print {
-      .no-print { display: none !important; }
-    }
-    .metric-card {
-      border-radius: 12px;
-      border: none;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-      transition: transform 0.2s;
-    }
-    .metric-card:hover {
-      transform: translateY(-2px);
+      @page {
+        size: A4 portrait;
+        margin: 10mm;
+      }
+
+      /* ከህትመት ውጭ ያሉትን ነገሮች በሙሉ መደበቅ */
+      body * {
+        visibility: hidden;
+      }
+
+      /* ለመታተም የተመረጠውን ሰንጠረዥና አርዕስት ብቻ ማሳየት */
+      #printableArea, #printableArea * {
+        visibility: visible;
+      }
+
+      #printableArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        color: #000 !important;
+      }
+
+      table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        font-size: 12px !important;
+      }
+
+      th, td {
+        border: 1px solid #000 !important;
+        padding: 6px 8px !important;
+        text-align: left !important;
+      }
+
+      th {
+        background-color: #f2f2f2 !important;
+        -webkit-print-color-adjust: exact;
+      }
+
+      /* በህትመት ጊዜ የማይፈለጉ ኮለሞችንና አዝራሮችን መደበቅ */
+      .no-print {
+        display: none !important;
+      }
     }
   </style>
 </head>
 <body class="bg-light">
 
-  <div class="container my-4">
-    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
-      <h2>📊 Admin Dashboard</h2>
+  <!-- NAVBAR -->
+  <nav class="navbar navbar-dark bg-dark mb-4 no-print">
+    <div class="container-fluid px-4">
+      <span class="navbar-brand mb-0 h1 fw-bold">🏫 የትምህርት ቤት አስተዳዳሪ ዳሽቦርድ</span>
       <div>
-        <a href="/" class="btn btn-outline-primary me-2">➕ ምዝገባ ገፅ</a>
-        <a href="/settings" class="btn btn-warning me-2">⚙️ System Settings & Security</a>
-        <a href="/export_excel" class="btn btn-success me-2">📥 Export Excel</a>
-        <button onclick="window.print()" class="btn btn-secondary me-2">🖨️ Print</button>
-        <a href="/logout" class="btn btn-danger">Logout</a>
+        <a href="/" class="btn btn-outline-light btn-sm me-2">🌐 የምዝገባ ገፅ</a>
+        <a href="/logout" class="btn btn-danger btn-sm fw-bold">🚪 ውጣ (Logout)</a>
       </div>
     </div>
+  </nav>
 
+  <div class="container-fluid px-4 mb-5">
+
+    <!-- FLASH MESSAGES -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
           <div class="alert alert-{{ category }} alert-dismissible fade show no-print" role="alert">
             {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
           </div>
         {% endfor %}
       {% endif %}
     {% endwith %}
 
-    <!-- FINANCIAL SUMMARY DASHBOARD CARDS -->
-    <div class="row g-3 mb-4 no-print">
-      <div class="col-md-3">
-        <div class="card metric-card bg-white p-3 border-start border-primary border-4">
-          <small class="text-muted text-uppercase fw-bold">ጠቅላላ ተማሪዎች</small>
-          <h3 class="mb-0 text-dark fw-bold mt-1">{{ total_students }}</h3>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card metric-card bg-white p-3 border-start border-info border-4">
-          <small class="text-muted text-uppercase fw-bold">ጠቅላላ የሚጠበቅ ክፍያ</small>
-          <h3 class="mb-0 text-info fw-bold mt-1">{{ "{:,.2f}".format(total_expected) }} ETB</h3>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card metric-card bg-white p-3 border-start border-success border-4">
-          <small class="text-muted text-uppercase fw-bold">የተሰበሰበ ገንዘብ</small>
-          <h3 class="mb-0 text-success fw-bold mt-1">{{ "{:,.2f}".format(total_paid) }} ETB</h3>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card metric-card bg-white p-3 border-start border-danger border-4">
-          <small class="text-muted text-uppercase fw-bold">ያልተከፈለ / የቀረ ገንዘብ</small>
-          <h3 class="mb-0 text-danger fw-bold mt-1">{{ "{:,.2f}".format(total_unpaid) }} ETB</h3>
-        </div>
-      </div>
-    </div>
-
-    <!-- CREATE NEW ADMIN FORM -->
+    <!-- SYSTEM SETTINGS CARD -->
     <div class="card shadow-sm mb-4 no-print">
-      <div class="card-header bg-success text-white fw-bold">
-        👤 አዲስ Admin መመዝገቢያ (Create New Admin Account)
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0 fw-bold">⚙️ የክፍያ ተመኖች እና የባንክ ሂሳብ ቁጥሮች ቅንብር</h5>
       </div>
       <div class="card-body">
-        <form action="/create_admin" method="POST" class="row g-3 align-items-center">
-          <div class="col-md-5">
-            <label class="form-label">አዲስ Username</label>
-            <input type="text" name="new_username" class="form-control" required placeholder="ለምሳሌ፡ admin2">
+        <form action="/update_settings" method="POST">
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label class="form-label fw-bold">የወር ክፍያ (Monthly Fee)</label>
+              <input type="number" step="0.01" name="monthly_fee" class="form-control" value="{{ settings.monthly_fee if settings else 3000 }}" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-bold">የተርም ክፍያ (Term Fee)</label>
+              <input type="number" step="0.01" name="term_fee" class="form-control" value="{{ settings.term_fee if settings else 8000 }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">ነባሪ አድራሻ (Default Address)</label>
+              <input type="text" name="default_address" class="form-control" value="{{ settings.default_address if settings else 'አቃቂ ቃሊቲ ወረዳ 09' }}" required>
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label fw-bold">CBO Account</label>
+              <input type="text" name="cbo_acc" class="form-control" value="{{ settings.cbo_acc if settings else '' }}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-bold">CBE Account</label>
+              <input type="text" name="cbe_acc" class="form-control" value="{{ settings.cbe_acc if settings else '' }}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-bold">Telebirr Number</label>
+              <input type="text" name="telebirr_acc" class="form-control" value="{{ settings.telebirr_acc if settings else '' }}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-bold">Awash Bank Account</label>
+              <input type="text" name="awash_acc" class="form-control" value="{{ settings.awash_acc if settings else '' }}">
+            </div>
           </div>
-          <div class="col-md-5">
-            <label class="form-label">የይለፍ ቃል (Password)</label>
-            <input type="password" name="new_password" class="form-control" required placeholder="ምስጢራዊ ቁጥር ያስገቡ">
-          </div>
-          <div class="col-md-2 d-flex align-items-end">
-            <button type="submit" class="btn btn-success w-100 fw-bold mt-4">Admin ፍጠር</button>
+          <div class="mt-3 text-end">
+            <button type="submit" class="btn btn-success fw-bold">💾 ቅንብሮችን መዝግብ (Save Settings)</button>
           </div>
         </form>
       </div>
     </div>
 
-    <!-- FINANCIAL BREAKDOWN TABLE -->
-    <div class="card shadow-sm">
-      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">📋 የተማሪዎች ክፍያ ዝርዝር (Payment Details)</h5>
+    <!-- ACTION BUTTONS & EXPORT ROW -->
+    <div class="d-flex justify-content-between align-items-center mb-3 no-print">
+      <h4 class="fw-bold mb-0">👨‍🎓 የተመዘገቡ ተማሪዎች ዝርዝር</h4>
+      <div>
+        <button onclick="window.print()" class="btn btn-secondary fw-bold me-2 shadow-sm">
+          🖨️ የህትመት ገፅ (Print Portrait)
+        </button>
+        <a href="/export_excel" class="btn btn-success fw-bold shadow-sm">
+          📊 ወደ Excel አውርድ (Export Excel)
+        </a>
       </div>
-      <div class="card-body p-0">
+    </div>
+
+    <!-- PRINTABLE AREA & TABLE -->
+    <div id="printableArea" class="card shadow-sm">
+      <div class="card-body p-3">
+        
+        <!-- HEADER ONLY VISIBLE ON PRINT -->
+        <div class="text-center d-none d-print-block mb-3">
+          <h3 class="fw-bold">የተማሪዎች ክፍያና ምዝገባ መረጃ መግለጫ</h3>
+          <p class="text-muted mb-1">ቀን፦ <span id="currentDate"></span></p>
+          <hr>
+        </div>
+
         <div class="table-responsive">
-          <table class="table table-striped align-middle mb-0">
+          <table class="table table-hover table-striped align-middle mb-0">
             <thead class="table-dark">
               <tr>
-                <th>ID</th>
-                <th>ተማሪ ስም</th>
-                <th>ክፍል / ሴክሽን</th>
-                <th>ስልክ</th>
-                <th>አድራሻ</th>
-                <th>የክፍያ አይነት</th>
-                <th>አጠቃላይ (Total)</th>
+                <th>#</th>
+                <th>የተማሪ ስም (Name)</th>
+                <th>ክፍል (Grade)</th>
+                <th>ስልክ ቁጥር (Phone)</th>
                 <th>የተከፈለ (Paid)</th>
-                <th>ቀሪ (Remaining)</th>
-                <th>FT Ref</th>
+                <th>ያልተከፈለ/ቀሪ (Unpaid)</th>
+                <th>የደረሰኝ ቁጥር (FT Ref)</th>
+                <th class="no-print">የክፍያ መንገድ</th>
+                <th class="no-print">ሁኔታ (Status)</th>
+                <th class="no-print text-center">ተግባር (Actions)</th>
               </tr>
             </thead>
             <tbody>
-              {% for item in student_data %}
+              {% for student in students %}
               <tr>
-                <td>{{ item.student.id }}</td>
-                <td><strong>{{ item.student.full_name }}</strong></td>
-                <td>{{ item.student.grade }} <span class="badge bg-secondary">{{ item.student.section }}</span></td>
-                <td>{{ item.student.phone }}</td>
-                <td>{{ item.student.address }}</td>
-                <td><span class="badge bg-info text-dark">{{ item.student.payment_type }}</span></td>
-                <td class="fw-bold">{{ "{:,.2f}".format(item.expected) }} ETB</td>
-                <td class="text-success fw-bold">{{ "{:,.2f}".format(item.paid) }} ETB</td>
-                <td>
-                  {% if item.remaining > 0 %}
-                    <span class="badge bg-danger fs-6">{{ "{:,.2f}".format(item.remaining) }} ETB</span>
+                <td>{{ loop.index }}</td>
+                <td class="fw-bold">{{ student.full_name }}</td>
+                <td><span class="badge bg-secondary">{{ student.grade }}</span></td>
+                <td>{{ student.phone }}</td>
+                <td class="text-success fw-bold">{{ "{:,.2f}".format(student.amount_paid) }} ETB</td>
+                
+                <!-- UNPAID / REMAINING CALCULATION -->
+                <td class="text-danger fw-bold">
+                  {% set req = settings.monthly_fee if 'Monthly' in student.payment_type else settings.term_fee %}
+                  {% set rem = req - student.amount_paid %}
+                  {% if rem > 0 %}
+                    {{ "{:,.2f}".format(rem) }} ETB
                   {% else %}
-                    <span class="badge bg-success fs-6">ሙሉ በሙሉ ተከፍሏል</span>
+                    0.00 ETB
                   {% endif %}
                 </td>
-                <td><small class="text-muted">{{ item.student.ft_approval_no }}</small></td>
+
+                <td><code class="fw-bold text-dark">{{ student.ft_approval_no }}</code></td>
+                <td class="no-print">{{ student.payment_method }}</td>
+                <td class="no-print">
+                  {% if student.status == 'Approved' %}
+                    <span class="badge bg-success">ተረጋግጧል (Approved)</span>
+                  {% elif student.status == 'Rejected' %}
+                    <span class="badge bg-danger">ተሰርዟል (Rejected)</span>
+                  {% else %}
+                    <span class="badge bg-warning text-dark">በመጠበቅ ላይ (Pending)</span>
+                  {% endif %}
+                </td>
+                <td class="no-print text-center">
+                  {% if student.status != 'Approved' %}
+                    <a href="/approve_student/{{ student.id }}" class="btn btn-sm btn-success me-1">✓ አረጋግጥ</a>
+                  {% endif %}
+                  {% if student.status != 'Rejected' %}
+                    <a href="/reject_student/{{ student.id }}" class="btn btn-sm btn-warning me-1">✕ ሰርዝ</a>
+                  {% endif %}
+                  <a href="/delete_student/{{ student.id }}" class="btn btn-sm btn-danger" onclick="return confirm('እርግጠኛ ነዎት ይህ ተማሪ እንዲጠፋ ይፈልጋሉ?')">🗑️ ጠርግ</a>
+                </td>
               </tr>
               {% else %}
               <tr>
-                <td colspan="10" class="text-center text-muted p-4">ምንም የተመዘገበ ተማሪ የለም።</td>
+                <td colspan="10" class="text-center py-4 text-muted">ምንም የተመዘገበ ተማሪ የለም።</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -148,5 +220,12 @@
 
   </div>
 
+  <script>
+    // ለህትመት ቀን ለማስገባት
+    const d = new Date();
+    document.getElementById("currentDate").innerText = d.toLocaleDateString();
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -41,7 +41,8 @@ class Setting(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     monthly_fee = db.Column(db.Float, default=3000.0)
     term_fee = db.Column(db.Float, default=8000.0)
-    class_capacity = db.Column(db.Integer, default=30)  # Max students per section
+    class_capacity = db.Column(db.Integer, default=30)
+    default_address = db.Column(db.String(200), default="አቃቂ ቃሊቲ ወረዳ 09")
 
 # Initialize Database
 with app.app_context():
@@ -52,8 +53,15 @@ with app.app_context():
         db.session.add(default_admin)
         db.session.commit()
     
-    if not Setting.query.first():
-        default_settings = Setting(monthly_fee=3000.0, term_fee=8000.0, class_capacity=30)
+    # Check and initialize Settings
+    settings = Setting.query.first()
+    if not settings:
+        default_settings = Setting(
+            monthly_fee=3000.0, 
+            term_fee=8000.0, 
+            class_capacity=30,
+            default_address="አቃቂ ቃሊቲ ወረዳ 09"
+        )
         db.session.add(default_settings)
         db.session.commit()
 
@@ -78,10 +86,9 @@ def add_student():
 
     # Automatic Section Assignment Logic (A, B, C...)
     existing_count = Student.query.filter_by(grade=grade).count()
-    capacity = settings.class_capacity if settings.class_capacity > 0 else 30
+    capacity = settings.class_capacity if (settings and settings.class_capacity > 0) else 30
     
     section_index = existing_count // capacity
-    # Generates 'A', 'B', 'C', etc.
     assigned_section = string.ascii_uppercase[section_index % 26] 
 
     new_student = Student(
@@ -129,9 +136,14 @@ def update_settings():
         return redirect(url_for('login'))
     
     settings = Setting.query.first()
+    if not settings:
+        settings = Setting()
+        db.session.add(settings)
+
     settings.monthly_fee = float(request.form.get('monthly_fee'))
     settings.term_fee = float(request.form.get('term_fee'))
     settings.class_capacity = int(request.form.get('class_capacity'))
+    settings.default_address = request.form.get('default_address')
     db.session.commit()
     
     flash('ቅንብሮች በስኬት ተቀይረዋል!', 'success')

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard - Kiyya Students Manager</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-light">
+
+  <div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+      <h2>📊 Admin Dashboard</h2>
+      <div>
+        <a href="/" class="btn btn-outline-primary me-2">➕ አዲስ ተማሪ መመዝገቢያ</a>
+        <a href="/export_excel" class="btn btn-success me-2">📥 Export Excel</a>
+        <button onclick="window.print()" class="btn btn-secondary me-2">🖨️ Print List</button>
+        <a href="/logout" class="btn btn-danger">Logout</a>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">የተመዘገቡ ተማሪዎች ዝርዝር</h5>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-bordered table-striped align-middle">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>ስም</th>
+                <th>ክፍል</th>
+                <th>ስልክ</th>
+                <th>አድራሻ</th>
+                <th>ክፍያ መንገድ</th>
+                <th>ገንዘብ (ETB)</th>
+                <th>ክፍያ አይነት</th>
+                <th>FT / Ref No</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for student in students %}
+              <tr>
+                <td>{{ student.id }}</td>
+                <td><strong>{{ student.full_name }}</strong></td>
+                <td>{{ student.grade }} {{ student.section }}</td>
+                <td>{{ student.phone }}</td>
+                <td>{{ student.address }}</td>
+                <td>{{ student.payment_method }}</td>
+                <td>{{ student.amount }}</td>
+                <td><span class="badge bg-info text-dark">{{ student.payment_type }}</span></td>
+                <td>{{ student.ft_approval_no }}</td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="9" class="text-center text-muted">ምንም የተመዘገበ ተማሪ የለም።</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

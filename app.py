@@ -8,7 +8,7 @@ import openpyxl
 app = Flask(__name__)
 app.secret_key = 'kiyya_secret_key_change_this'
 
-# Database Configuration (Render PostgreSQL or local SQLite)
+# Database Configuration
 db_url = os.environ.get('DATABASE_URL', 'sqlite:///students.db')
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
@@ -30,11 +30,11 @@ class Student(db.Model):
     grade = db.Column(db.String(20), nullable=False)
     section = db.Column(db.String(10), nullable=True)
     phone = db.Column(db.String(20), nullable=True)
-    address = db.Column(db.String(200), nullable=True)             # አድራሻ
-    payment_method = db.Column(db.String(50), nullable=True)        # CBE, Telebirr, etc.
-    ft_approval_no = db.Column(db.String(100), nullable=True)       # FT approval / Reference No
-    amount = db.Column(db.Float, nullable=True)                     # የገንዘብ መጠን
-    payment_type = db.Column(db.String(50), nullable=True)          # Monthly / Term
+    address = db.Column(db.String(200), nullable=True)
+    payment_method = db.Column(db.String(50), nullable=True)
+    ft_approval_no = db.Column(db.String(100), nullable=True)
+    amount = db.Column(db.Float, nullable=True)
+    payment_type = db.Column(db.String(50), nullable=True)
 
 # Initialize Database and Create Default Admin
 with app.app_context():
@@ -45,40 +45,13 @@ with app.app_context():
         db.session.add(default_admin)
         db.session.commit()
 
-# Routes
+# --- Public Student Registration Page (No Login Required) ---
 @app.route('/')
-def index():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    students = Student.query.all()
-    return render_template('index.html', students=students)
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        user = User.query.filter_by(username=username).first()
-        if user and check_password_hash(user.password_hash, password):
-            session['user_id'] = user.id
-            session['username'] = user.username
-            flash('በስኬት ገብተዋል!', 'success')
-            return redirect(url_for('index'))
-        else:
-            flash('የተሳሳተ Username ወይም Password!', 'danger')
-    return render_template('login.html')
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    flash('ወጥተዋል!', 'info')
-    return redirect(url_for('login'))
+def register_page():
+    return render_template('register.html')
 
 @app.route('/add_student', methods=['POST'])
 def add_student():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
     full_name = request.form.get('full_name')
     grade = request.form.get('grade')
     section = request.form.get('section')
@@ -102,8 +75,36 @@ def add_student():
     )
     db.session.add(new_student)
     db.session.commit()
-    flash('ተማሪው በስኬት ተመዝግቧል!', 'success')
-    return redirect(url_for('index'))
+    flash('ምዝገባዎ በስኬት ተጠናቋል! እናመሰግናለን።', 'success')
+    return redirect(url_for('register_page'))
+
+# --- Admin Section (Requires Login) ---
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        user = User.query.filter_by(username=username).first()
+        if user and check_password_hash(user.password_hash, password):
+            session['user_id'] = user.id
+            session['username'] = user.username
+            return redirect(url_for('admin_dashboard'))
+        else:
+            flash('የተሳሳተ Username ወይም Password!', 'danger')
+    return render_template('login.html')
+
+@app.route('/admin')
+def admin_dashboard():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    students = Student.query.all()
+    return render_template('admin.html', students=students)
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash('ወጥተዋል!', 'info')
+    return redirect(url_for('login'))
 
 @app.route('/export_excel')
 def export_excel():
@@ -111,15 +112,12 @@ def export_excel():
         return redirect(url_for('login'))
 
     students = Student.query.all()
-    
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Students List"
 
-    # Header Row
-    ws.append(["ID", "Full Name", "Grade", "Section", "Phone", "Address", "Payment Method", "FT / Ref No", "Amount (ETB)", "Payment Type"])
+    ws.append(["ID", "Full Name", "Grade", "Section", "Phone", "Address", "Payment Method", "FT Ref No", "Amount", "Payment Type"])
 
-    # Data Rows
     for s in students:
         ws.append([s.id, s.full_name, s.grade, s.section, s.phone, s.address, s.payment_method, s.ft_approval_no, s.amount, s.payment_type])
 

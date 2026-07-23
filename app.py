@@ -35,7 +35,7 @@ class Student(db.Model):
     address = db.Column(db.String(200), nullable=True)
     payment_method = db.Column(db.String(50), nullable=True)
     ft_approval_no = db.Column(db.String(100), nullable=True)
-    amount_paid = db.Column(db.Float, default=0.0)  # የከፈለው መጠን
+    amount_paid = db.Column(db.Float, default=0.0)
     payment_type = db.Column(db.String(50), nullable=True)
 
 class Setting(db.Model):
@@ -201,12 +201,6 @@ def export_excel():
     header_fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
     header_font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
     bold_font = Font(name="Calibri", size=11, bold=True)
-    border = Border(
-        left=Side(style='thin', color='D9D9D9'),
-        right=Side(style='thin', color='D9D9D9'),
-        top=Side(style='thin', color='D9D9D9'),
-        bottom=Side(style='thin', color='D9D9D9')
-    )
 
     headers = [
         "ID", "Full Name", "Grade", "Section", "Phone", "Address", 

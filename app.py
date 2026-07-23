@@ -122,7 +122,6 @@ def login():
             flash('የተሳሳተ Username ወይም Password!', 'danger')
     return render_template('login.html')
 
-# --- Add New Admin / Register ---
 @app.route('/create_admin', methods=['POST'])
 def create_admin():
     if 'user_id' not in session:
@@ -143,7 +142,6 @@ def create_admin():
         
     return redirect(url_for('admin_dashboard'))
 
-# --- Edit / Change Password ---
 @app.route('/change_password', methods=['POST'])
 def change_password():
     if 'user_id' not in session:
@@ -160,7 +158,7 @@ def change_password():
     else:
         flash('የድሮው የይለፍ ቃል የተሳሳተ ነው!', 'danger')
         
-    return redirect(url_for('admin_dashboard'))
+    return redirect(url_for('settings_page'))
 
 @app.route('/admin')
 def admin_dashboard():
@@ -200,6 +198,15 @@ def admin_dashboard():
                            total_unpaid=total_unpaid,
                            total_students=len(students))
 
+# --- Separate System Settings & Password Page ---
+@app.route('/settings')
+def settings_page():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    settings = Setting.query.first()
+    return render_template('settings.html', settings=settings)
+
 @app.route('/update_settings', methods=['POST'])
 def update_settings():
     if 'user_id' not in session:
@@ -217,7 +224,7 @@ def update_settings():
     db.session.commit()
     
     flash('ቅንብሮች በስኬት ተቀይረዋል!', 'success')
-    return redirect(url_for('admin_dashboard'))
+    return redirect(url_for('settings_page'))
 
 @app.route('/logout')
 def logout():

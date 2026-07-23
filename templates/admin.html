@@ -26,8 +26,9 @@
       <h2>📊 Admin Dashboard</h2>
       <div>
         <a href="/" class="btn btn-outline-primary me-2">➕ ምዝገባ ገፅ</a>
-        <a href="/export_excel" class="btn btn-success me-2">📥 Export Excel Spreadsheet</a>
-        <button onclick="window.print()" class="btn btn-secondary me-2">🖨️ Print Report</button>
+        <a href="/settings" class="btn btn-warning me-2">⚙️ System Settings & Security</a>
+        <a href="/export_excel" class="btn btn-success me-2">📥 Export Excel</a>
+        <button onclick="window.print()" class="btn btn-secondary me-2">🖨️ Print</button>
         <a href="/logout" class="btn btn-danger">Logout</a>
       </div>
     </div>
@@ -52,96 +53,41 @@
       </div>
       <div class="col-md-3">
         <div class="card metric-card bg-white p-3 border-start border-info border-4">
-          <small class="text-muted text-uppercase fw-bold">ጠቅላላ የሚጠበቅ ክፍያ (Total Expected)</small>
+          <small class="text-muted text-uppercase fw-bold">ጠቅላላ የሚጠበቅ ክፍያ</small>
           <h3 class="mb-0 text-info fw-bold mt-1">{{ "{:,.2f}".format(total_expected) }} ETB</h3>
         </div>
       </div>
       <div class="col-md-3">
         <div class="card metric-card bg-white p-3 border-start border-success border-4">
-          <small class="text-muted text-uppercase fw-bold">የተሰበሰበ ገንዘብ (Total Paid)</small>
+          <small class="text-muted text-uppercase fw-bold">የተሰበሰበ ገንዘብ</small>
           <h3 class="mb-0 text-success fw-bold mt-1">{{ "{:,.2f}".format(total_paid) }} ETB</h3>
         </div>
       </div>
       <div class="col-md-3">
         <div class="card metric-card bg-white p-3 border-start border-danger border-4">
-          <small class="text-muted text-uppercase fw-bold">ያልተከፈለ / የቀረ ገንዘብ (Unpaid)</small>
+          <small class="text-muted text-uppercase fw-bold">ያልተከፈለ / የቀረ ገንዘብ</small>
           <h3 class="mb-0 text-danger fw-bold mt-1">{{ "{:,.2f}".format(total_unpaid) }} ETB</h3>
         </div>
       </div>
     </div>
 
-    <!-- ADMIN MANAGEMENT: CHANGE PASSWORD & CREATE NEW ADMIN -->
-    <div class="row g-3 mb-4 no-print">
-      <!-- Change Password Card -->
-      <div class="col-md-6">
-        <div class="card shadow-sm h-100">
-          <div class="card-header bg-warning text-dark fw-bold">
-            🔒 የይለፍ ቃል መቀየሪያ (Change Password)
-          </div>
-          <div class="card-body">
-            <form action="/change_password" method="POST">
-              <div class="mb-3">
-                <label class="form-label">የድሮው የይለፍ ቃል (Current Password)</label>
-                <input type="password" name="old_password" class="form-control" required placeholder="የአሁኑን ፓስወርድ ያስገቡ">
-              </div>
-              <div class="mb-3">
-                <label class="form-label">አዲሱ የይለፍ ቃል (New Password)</label>
-                <input type="password" name="new_password" class="form-control" required placeholder="አዲሱን ፓስወርድ ያስገቡ">
-              </div>
-              <button type="submit" class="btn btn-warning w-100 fw-bold">ፓስወርድ ቀይር</button>
-            </form>
-          </div>
-        </div>
-      </div>
-
-      <!-- Create New Admin Card -->
-      <div class="col-md-6">
-        <div class="card shadow-sm h-100">
-          <div class="card-header bg-success text-white fw-bold">
-            👤 አዲስ Admin መመዝገቢያ (Create New Admin)
-          </div>
-          <div class="card-body">
-            <form action="/create_admin" method="POST">
-              <div class="mb-3">
-                <label class="form-label">አዲስ Username</label>
-                <input type="text" name="new_username" class="form-control" required placeholder="ለምሳሌ፡ admin2">
-              </div>
-              <div class="mb-3">
-                <label class="form-label">የይለፍ ቃል (Password)</label>
-                <input type="password" name="new_password" class="form-control" required placeholder="ምስጢራዊ ቁጥር ያስገቡ">
-              </div>
-              <button type="submit" class="btn btn-success w-100 fw-bold">አዲስ Admin ፍጠር</button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- SYSTEM SETTINGS -->
+    <!-- CREATE NEW ADMIN FORM -->
     <div class="card shadow-sm mb-4 no-print">
-      <div class="card-header bg-dark text-white">
-        <h5 class="mb-0">⚙️ የሲስተም ቅንብሮች (Settings)</h5>
+      <div class="card-header bg-success text-white fw-bold">
+        👤 አዲስ Admin መመዝገቢያ (Create New Admin Account)
       </div>
       <div class="card-body">
-        <form action="/update_settings" method="POST" class="row g-3 align-items-center">
-          <div class="col-md-3">
-            <label class="form-label">የወር ክፍያ (ETB)</label>
-            <input type="number" step="0.01" name="monthly_fee" class="form-control" value="{{ settings.monthly_fee if settings else 3000 }}" required>
+        <form action="/create_admin" method="POST" class="row g-3 align-items-center">
+          <div class="col-md-5">
+            <label class="form-label">አዲስ Username</label>
+            <input type="text" name="new_username" class="form-control" required placeholder="ለምሳሌ፡ admin2">
           </div>
-          <div class="col-md-3">
-            <label class="form-label">የተርም ክፍያ (ETB)</label>
-            <input type="number" step="0.01" name="term_fee" class="form-control" value="{{ settings.term_fee if settings else 8000 }}" required>
+          <div class="col-md-5">
+            <label class="form-label">የይለፍ ቃል (Password)</label>
+            <input type="password" name="new_password" class="form-control" required placeholder="ምስጢራዊ ቁጥር ያስገቡ">
           </div>
-          <div class="col-md-3">
-            <label class="form-label">በሴክሽን ከፍተኛ ተማሪ ብዛት</label>
-            <input type="number" name="class_capacity" class="form-control" value="{{ settings.class_capacity if settings else 30 }}" required>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">Default አድራሻ</label>
-            <input type="text" name="default_address" class="form-control" value="{{ settings.default_address if settings and settings.default_address else 'አቃቂ ቃሊቲ ወረዳ 09' }}" required>
-          </div>
-          <div class="col-md-12 text-end">
-            <button type="submit" class="btn btn-primary px-4">ቅንብሩን አድስ (Save Settings)</button>
+          <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-success w-100 fw-bold mt-4">Admin ፍጠር</button>
           </div>
         </form>
       </div>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+  <meta charset="UTF-8">
+  <title>System Settings & Security</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+  <div class="container my-5" style="max-width: 900px;">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2>⚙️ System Settings & Security</h2>
+      <a href="/admin" class="btn btn-outline-secondary">⬅️ ወደ Dashboard ተመለስ</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- SYSTEM SETTINGS CARD -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">⚙️ የሲስተም ቅንብሮች (Fee & Capacity Settings)</h5>
+      </div>
+      <div class="card-body">
+        <form action="/update_settings" method="POST" class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">የወር ክፍያ (ETB)</label>
+            <input type="number" step="0.01" name="monthly_fee" class="form-control" value="{{ settings.monthly_fee if settings else 3000 }}" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">የተርም ክፍያ (ETB)</label>
+            <input type="number" step="0.01" name="term_fee" class="form-control" value="{{ settings.term_fee if settings else 8000 }}" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">በሴክሽን ከፍተኛ ተማሪ ብዛት (Capacity)</label>
+            <input type="number" name="class_capacity" class="form-control" value="{{ settings.class_capacity if settings else 30 }}" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Default አድራሻ</label>
+            <input type="text" name="default_address" class="form-control" value="{{ settings.default_address if settings and settings.default_address else 'አቃቂ ቃሊቲ ወረዳ 09' }}" required>
+          </div>
+          <div class="col-md-12 text-end mt-3">
+            <button type="submit" class="btn btn-primary px-4 fw-bold">ቅንብሩን አድስ (Save Settings)</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- CHANGE PASSWORD CARD -->
+    <div class="card shadow-sm">
+      <div class="card-header bg-warning text-dark fw-bold">
+        🔒 የይለፍ ቃል መቀየሪያ (Change Password)
+      </div>
+      <div class="card-body">
+        <form action="/change_password" method="POST" class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">የድሮው የይለፍ ቃል (Current Password)</label>
+            <input type="password" name="old_password" class="form-control" required placeholder="የአሁኑን ፓስወርድ ያስገቡ">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">አዲሱ የይለፍ ቃል (New Password)</label>
+            <input type="password" name="new_password" class="form-control" required placeholder="አዲሱን ፓስወርድ ያስገቡ">
+          </div>
+          <div class="col-md-12 text-end mt-3">
+            <button type="submit" class="btn btn-warning px-4 fw-bold">ፓስወርድ ቀይር (Update Password)</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

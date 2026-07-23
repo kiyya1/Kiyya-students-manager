@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>የተማሪዎች ምዝገባ ቅጽ (School Registration)</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <style>
+    body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .card-custom { border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: none; }
+    .header-banner { background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%); color: white; border-radius: 16px 16px 0 0; padding: 25px; }
+    .fee-badge { font-size: 1.15rem; font-weight: bold; }
+    .bank-box { background-color: #eef2f7; border-left: 5px solid #0d6efd; border-radius: 8px; transition: all 0.3s ease; }
+  </style>
+</head>
+<body>
+
+  <!-- TOP HEADER WITH BLUE BANNER AND ADMIN BUTTON ON THE RIGHT -->
+  <div class="container mt-4 mb-5">
+    <div class="row justify-content-center">
+      <div class="col-md-9 col-lg-8">
+        
+        <div class="card card-custom">
+          
+          <!-- BLUE BANNER HEADER -->
+          <div class="header-banner d-flex justify-content-between align-items-center">
+            <div>
+              <h2 class="fw-bold mb-1"><i class="bi bi-mortarboard-fill me-2"></i>🎓 Wabi School</h2>
+              <p class="mb-0 text-white-50">የተማሪዎች ኦንላይን ምዝገባ ቅጽ (Online Registration)</p>
+            </div>
+            <div>
+              <a href="/login" class="btn btn-light text-primary fw-bold shadow-sm rounded-pill px-3 py-2">
+                <i class="bi bi-shield-lock-fill me-1"></i>Admin Login
+              </a>
+            </div>
+          </div>
+
+          <!-- FORM BODY -->
+          <div class="card-body p-4 p-md-5">
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="alert alert-{{ category }} alert-dismissible fade show mb-4" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            <form action="/add_student" method="POST" class="row g-3">
+              
+              <!-- STUDENT NAME -->
+              <div class="col-md-6">
+                <label class="form-label fw-bold">የተማሪው ሙሉ ስም *</label>
+                <input type="text" name="full_name" class="form-control" placeholder="ምሳሌ፦ ሄለን ሀንት" required>
+              </div>
+
+              <!-- GRADE -->
+              <div class="col-md-6">
+                <label class="form-label fw-bold">ክፍል (Grade) *</label>
+                <select name="grade" class="form-select" required>
+                  <option value="">ክፍል ይምረጡ...</option>
+                  {% for i in range(1, 13) %}
+                    {% set g = i ~ ("st" if i==1 else "nd" if i==2 else "rd" if i==3 else "th") ~ " Grade" %}
+                    <option value="{{ g }}">{{ g }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- PHONE -->
+              <div class="col-md-6">
+                <label class="form-label fw-bold">ስልክ ቁጥር *</label>
+                <input type="tel" name="phone" class="form-control" placeholder="0911000000" required>
+              </div>
+
+              <!-- BUS SERVICE -->
+              <div class="col-md-6">
+                <label class="form-label fw-bold">🚌 ስኩል ባስ (Bus Service)</label>
+                <select name="bus_service" id="bus_service" onchange="calculateTotalFee()" class="form-select">
+                  <option value="እፈልጋለሁ (Yes Bus)">እፈልጋለሁ (+ {{ "{:,.0f}".format(settings.bus_fee) if settings else 1500 }} ETB)</option>
+                  <option value="አልፈልግም (No Bus)" selected>አልፈልግም (No Bus)</option>
+                </select>
+              </div>
+
+              <!-- ADDRESS -->
+              <div class="col-12">
+                <label class="form-label fw-bold">መኖሪያ አድራሻ</label>
+                <input type="text" name="address" class="form-control" value="{{ settings.default_address if settings else 'አቃቂ ቃሊቲ ወረዳ 09' }}">
+              </div>
+
+              <!-- PAYMENT TYPE -->
+              <div class="col-md-6">
+                <label class="form-label fw-bold">የክፍያ አይነት *</label>
+                <select name="payment_type" id="payment_type" onchange="calculateTotalFee()" class="form-select" required>
+                  <option value="Monthly Payment" data-amount="{{ settings.monthly_fee if settings else 3000 }}">የወር ክፍያ ({{ "{:,.0f}".format(settings.monthly_fee) if settings else 3000 }} ETB)</option>
+                  <option value="Term Payment" data-amount="{{ settings.term_fee if settings else 8000 }}">የተርም ክፍያ ({{ "{:,.0f}".format(settings.term_fee) if settings else 8000 }} ETB)</option>
+                </select>
+              </div>
+
+              <!-- CALCULATED TOTAL DISPLAY -->
+              <div class="col-md-6">
+                <label class="form-label fw-bold">የሚከፈለዉ ጠቅላላ ክፍያ (Total Due)</label>
+                <div class="alert alert-primary py-2 px-3 m-0 d-flex justify-content-between align-items-center">
+                  <span>የሚጠበቅ ክፍያ፦</span>
+                  <span class="fee-badge text-primary" id="calculatedTotalDisplay">0 ETB</span>
+                </div>
+              </div>
+
+              <!-- PAYMENT METHOD SELECT -->
+              <div class="col-md-6">
+                <label class="form-label fw-bold">የክፍያ መንገድ (Payment Method) *</label>
+                <select name="payment_method" id="payment_method" onchange="updateAccountDetails()" class="form-select" required>
+                  <option value="Telebirr">Telebirr (ቴሌብር)</option>
+                  <option value="CBE Birr/CBE">CBE (የኢትዮጵያ ንግድ ባንክ)</option>
+                  <option value="Cooperative Bank (CBO)">Cooperative Bank of Oromia (CBO)</option>
+                  <option value="Awash Bank">Awash Bank (አዋሽ ባንክ)</option>
+                  <option value="Cash">በጥሬ ገንዘብ (Cash)</option>
+                </select>
+              </div>
+
+              <!-- PAID AMOUNT -->
+              <div class="col-md-6">
+                <label class="form-label fw-bold">የተከፈለ ገንዘብ (ETB) *</label>
+                <input type="number" step="0.01" id="amount_paid" name="amount_paid" class="form-control" placeholder="0.00" required>
+              </div>
+
+              <!-- DYNAMIC BANK ACCOUNT DISPLAY BOX -->
+              <div class="col-12">
+                <div class="bank-box p-3" id="accountInfoBox">
+                  <div class="d-flex align-items-center">
+                    <i class="bi bi-credit-card-2-front-fill fs-3 text-primary me-3"></i>
+                    <div>
+                      <small class="text-muted fw-bold d-block" id="bankNameTitle">የባንክ / ክፍያ ሂሳብ ቁጥር፦</small>
+                      <span class="fs-5 fw-bold text-dark" id="accountNumberDisplay">0911 00 00 00 / Wabi School</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- TRANSACTION ID -->
+              <div class="col-12">
+                <label class="form-label fw-bold">የደረሰኝ / የትራንዛክሽን ቁጥር (FT / Ref Number) *</label>
+                <input type="text" name="ft_approval_no" class="form-control" placeholder="ምሳሌ፦ FT239019283 ወይም TXN8912389" required>
+              </div>
+
+              <!-- SUBMIT BUTTON -->
+              <div class="col-12 mt-4">
+                <button type="submit" class="btn btn-primary w-100 py-3 fs-5 fw-bold shadow">
+                  📝 ምዝገባውን መዝግብ (Submit Registration)
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Bank and Mobile Money Accounts Data
+    const accountsInfo = {
+      "Telebirr": { title: "የቴሌብር (Telebirr) ቁጥር", acc: "📱 0911 00 00 00 (Wabi School)" },
+      "CBE Birr/CBE": { title: "የኢትዮጵያ ንግድ ባንክ (CBE) ሂሳብ ቁጥር", acc: "💳 1000 1234 5678 9 (Wabi School Account)" },
+      "Cooperative Bank (CBO)": { title: "የኦሮሚያ ህብረት ስራ ባንክ (CBO) ሂሳብ ቁጥር", acc: "💳 1001 2345 6789 0 (Wabi Primary School)" },
+      "Awash Bank": { title: "አዋሽ ባንክ (Awash Bank) ሂሳብ ቁጥር", acc: "💳 0132 0987 6543 2 (Wabi School Official)" },
+      "Cash": { title: "የክፍያ ሁኔታ", acc: "💵 በትምህርት ቤቱ ገንዘብ ተቀባይ ቢሮ በአካል የተከፈለ" }
+    };
+
+    function calculateTotalFee() {
+      const busFeeAmount = {{ settings.bus_fee if settings else 1500 }};
+      const paymentSelect = document.getElementById("payment_type");
+      const selectedOption = paymentSelect.options[paymentSelect.selectedIndex];
+      const baseFee = parseFloat(selectedOption.getAttribute("data-amount")) || 0;
+      
+      const busSelect = document.getElementById("bus_service").value;
+      let totalFee = baseFee;
+
+      if (busSelect.includes("እፈልጋለሁ") || busSelect.includes("Yes")) {
+        totalFee += busFeeAmount;
+      }
+
+      document.getElementById("calculatedTotalDisplay").innerText = totalFee.toLocaleString() + " ETB";
+      
+      const amountPaidInput = document.getElementById("amount_paid");
+      if (!amountPaidInput.value) {
+        amountPaidInput.value = totalFee;
+      }
+    }
+
+    function updateAccountDetails() {
+      const selectedMethod = document.getElementById("payment_method").value;
+      const info = accountsInfo[selectedMethod] || accountsInfo["Telebirr"];
+      
+      document.getElementById("bankNameTitle").innerText = info.title;
+      document.getElementById("accountNumberDisplay").innerText = info.acc;
+    }
+
+    // Initialize on page load
+    window.onload = function() {
+      calculateTotalFee();
+      updateAccountDetails();
+    };
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

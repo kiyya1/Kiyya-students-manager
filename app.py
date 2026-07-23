@@ -1,14 +1,24 @@
 import os
+import sys
 import io
 import string
+import webbrowser
 from datetime import datetime
+from threading import Timer
 from flask import Flask, render_template, request, redirect, url_for, flash, send_file, session
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import openpyxl
-from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.styles import Font, PatternFill
 
-app = Flask(__name__)
+# --- PyInstaller EXE Path Handling ---
+if getattr(sys, 'frozen', False):
+    template_folder = os.path.join(sys._MEIPASS, 'templates')
+    static_folder = os.path.join(sys._MEIPASS, 'static')
+    app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
+else:
+    app = Flask(__name__)
+
 app.secret_key = 'kiyya_secret_key_change_this'
 
 # Database Configuration
@@ -289,6 +299,16 @@ def export_excel():
 
     return send_file(output, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", as_attachment=True, download_name="Wabi_School_Executive_Dashboard.xlsx")
 
+# --- STANDALONE EXE BROWSER LAUNCHER ---
+def open_browser():
+    webbrowser.open_new('http://127.0.0.1:5000/')
+
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    if getattr(sys, 'frozen', False):
+        # PyInstaller EXE ሆኖ ሲከፈት በራሱ ብራውዘር ይከፍታል
+        Timer(1.2, open_browser).start()
+        app.run(port=5000, debug=False)
+    else:
+        # Normal Server Development Mode
+        port = int(os.environ.get('PORT', 5000))
+        app.run(host='0.0.0.0', port=port, debug=True)

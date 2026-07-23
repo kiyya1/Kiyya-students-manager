@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>የተማሪ መረጃ ማስተካከያ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #eef2f3 0%, #8e9eab 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .form-card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 480px;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        .form-card:hover {
+            transform: translateY(-3px);
+        }
+        .form-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .form-header h2 {
+            color: #2c3e50;
+            font-size: 22px;
+            font-weight: 600;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #34495e;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #2d3748;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        input:focus, select:focus {
+            border-color: #f1c40f;
+            box-shadow: 0 0 0 3px rgba(241, 196, 15, 0.2);
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #f1c40f, #d4ac0d);
+            color: #2c3e50;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(241, 196, 15, 0.3);
+        }
+        button:hover {
+            background: linear-gradient(135deg, #d4ac0d, #b7950b);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(241, 196, 15, 0.4);
+        }
+        .btn-cancel {
+            display: block;
+            text-align: center;
+            margin-top: 15px;
+            color: #7f8c8d;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+        .btn-cancel:hover {
+            color: #34495e;
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-card">
+    <div class="form-header">
+        <h2>የተማሪ መረጃ ማስተካከያ</h2>
+    </div>
+
+    <form action="/edit/{{ student[0] }}" method="POST">
+        <div class="form-group">
+            <label for="fullname">ሙሉ ስም</label>
+            <input type="text" id="fullname" name="fullname" value="{{ student[1] }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="age">እድሜ</label>
+            <input type="number" id="age" name="age" value="{{ student[2] }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="grade">ክፍል / ደረጃ</label>
+            <select id="grade" name="grade" required>
+                <option value="1ኛ ክፍል" {% if student[3] == '1ኛ ክፍል' %}selected{% endif %}>1ኛ ክፍል</option>
+                <option value="2ኛ ክፍል" {% if student[3] == '2ኛ ክፍል' %}selected{% endif %}>2ኛ ክፍል</option>
+                <option value="3ኛ ክፍል" {% if student[3] == '3ኛ ክፍል' %}selected{% endif %}>3ኛ ክፍል</option>
+                <option value="4ኛ ክፍል" {% if student[3] == '4ኛ ክፍል' %}selected{% endif %}>4ኛ ክፍል</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="parent_phone">የወላጅ ስልክ ቁጥር</label>
+            <input type="tel" id="parent_phone" name="parent_phone" value="{{ student[4] }}" required>
+        </div>
+
+        <button type="submit">መረጃውን አሻሽል (Update)</button>
+        <a href="/students" class="btn-cancel">ሰርዝ እና ተመለስ</a>
+    </form>
+</div>
+
+</body>
+</html>

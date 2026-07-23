@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+  <meta charset="UTF-8">
+  <title>🎓 Wabi School — Executive Dashboard & Analytics</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <style>
+    body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .hover-card { transition: all 0.3s ease; border: none; border-radius: 12px; }
+    .hover-card:hover { transform: translateY(-5px); box-shadow: 0 12px 24px rgba(13, 110, 253, 0.2) !important; }
+    .print-footer { display: none; }
+
+    @media print {
+      @page { size: A4 portrait; margin: 15mm 10mm 20mm 10mm; }
+      body * { visibility: hidden; }
+      #printableArea, #printableArea * { visibility: visible; }
+      #printableArea { position: absolute; left: 0; top: 0; width: 100%; color: #000 !important; }
+      table { width: 100% !important; border-collapse: collapse !important; font-size: 11px !important; }
+      th, td { border: 1px solid #000 !important; padding: 5px 6px !important; text-align: left !important; }
+      th { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact; }
+      .no-print { display: none !important; }
+      .print-footer {
+        display: block !important; position: fixed; bottom: 0; left: 0; width: 100%;
+        text-align: center; font-family: "Times New Roman", Times, serif !important;
+        font-size: 10pt !important; color: #000 !important; border-top: 1px solid #ccc;
+        padding-top: 4px; background-color: #fff;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4 no-print shadow">
+    <div class="container-fluid px-4">
+      <span class="navbar-brand fw-bold fs-4"><i class="bi bi-mortarboard-fill me-2"></i>🎓 Wabi School — Executive Dashboard</span>
+      <div>
+        <button class="btn btn-light btn-sm text-primary fw-bold me-2" data-bs-toggle="modal" data-bs-target="#changePwModal">
+          <i class="bi bi-key-fill me-1"></i>🔑 Change Password
+        </button>
+        <a href="/" class="btn btn-outline-light btn-sm fw-bold me-2"><i class="bi bi-globe me-1"></i>የምዝገባ ገፅ</a>
+        <a href="/logout" class="btn btn-danger btn-sm fw-bold"><i class="bi bi-box-arrow-right me-1"></i>ውጣ</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid px-4 mb-5">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show no-print shadow-sm" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- TOP FINANCIAL SUMMARY CARDS -->
+    <div class="row g-3 mb-4 no-print">
+      <div class="col-md-3">
+        <div class="card shadow-sm hover-card bg-primary text-white p-3">
+          <small class="text-white-50 fw-bold">ጠቅላላ የተመዘገቡ ተማሪዎች</small>
+          <h2 class="fw-bold mb-0 mt-1"><i class="bi bi-people-fill me-2"></i>{{ total_students }}</h2>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card shadow-sm hover-card bg-dark text-white p-3">
+          <small class="text-white-50 fw-bold">የሚጠበቅ ጠቅላላ ገቢ (Total Expected)</small>
+          <h2 class="fw-bold mb-0 mt-1">{{ "{:,.2f}".format(total_expected) }} <small class="fs-6">ETB</small></h2>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card shadow-sm hover-card bg-success text-white p-3">
+          <small class="text-white-50 fw-bold">የተሰበሰበ ክፍያ (Total Paid)</small>
+          <h2 class="fw-bold mb-0 mt-1">{{ "{:,.2f}".format(total_paid) }} <small class="fs-6">ETB</small></h2>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card shadow-sm hover-card bg-danger text-white p-3">
+          <small class="text-white-50 fw-bold">ያልተሰበሰበ ቀሪ (Total Unpaid)</small>
+          <h2 class="fw-bold mb-0 mt-1">{{ "{:,.2f}".format(total_unpaid) }} <small class="fs-6">ETB</small></h2>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS ACCORDION -->
+    <div class="accordion mb-4 no-print shadow-sm" id="adminAccordion">
+      <div class="accordion-item">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed fw-bold text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#settingsCollapse">
+            <i class="bi bi-sliders me-2"></i>የክፍያ ተመኖች፣ የስኩል ባስ ክፍያ እና Target Plan ቅንብር
+          </button>
+        </h2>
+        <div id="settingsCollapse" class="accordion-collapse collapse" data-bs-parent="#adminAccordion">
+          <div class="accordion-body bg-white">
+            <form action="/update_settings" method="POST" class="row g-3">
+              <div class="col-md-3">
+                <label class="form-label fw-bold">የወር ክፍያ (ETB)</label>
+                <input type="number" step="0.01" name="monthly_fee" class="form-control" value="{{ settings.monthly_fee if settings else 3000 }}" required>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-bold">የተርም ክፍያ (ETB)</label>
+                <input type="number" step="0.01" name="term_fee" class="form-control" value="{{ settings.term_fee if settings else 8000 }}" required>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-bold text-success">🚌 የስኩል ባስ ክፍያ (Bus Fee ETB)</label>
+                <input type="number" step="0.01" name="bus_fee" class="form-control border-success fw-bold" value="{{ settings.bus_fee if settings else 1500 }}" required>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-bold">Plan Target (ለእያንዳንዱ ክፍል)</label>
+                <input type="number" name="plan_target_per_grade" class="form-control" value="{{ settings.plan_target_per_grade if settings else 50 }}" required>
+              </div>
+              <div class="col-12 text-end">
+                <button type="submit" class="btn btn-primary fw-bold">💾 ቅንብሮችን አስቀምጥ</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="card shadow-sm mb-3 no-print p-3 bg-white">
+      <div class="row align-items-center g-2">
+        <div class="col-md-4">
+          <h4 class="fw-bold text-primary mb-0"><i class="bi bi-people-fill me-2"></i>የተማሪዎች ሙሉ ዝርዝር</h4>
+        </div>
+        <div class="col-md-4">
+          <input type="text" id="tableSearch" onkeyup="filterTable()" class="form-control" placeholder="🔍 በተማሪ ስም፣ ስልክ ወይም FT Ref ፈልግ...">
+        </div>
+        <div class="col-md-4 text-end">
+          <button onclick="window.print()" class="btn btn-secondary fw-bold me-2 shadow-sm">
+            🖨️ የህትመት ገፅ (Print List)
+          </button>
+          <a href="/export_excel" class="btn btn-success fw-bold shadow-sm">
+            📊 Excel Export (Multi-Sheet)
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN TABLE -->
+    <div id="printableArea" class="card shadow-sm hover-card">
+      <div class="card-body p-3">
+        
+        <div class="text-center d-none d-print-block mb-3">
+          <h3 class="fw-bold">🎓 Wabi School — የተማሪዎች ክፍያና ምዝገባ መረጃ መግለጫ</h3>
+          <p class="text-muted mb-1">ቀን፦ <span id="currentDate"></span></p>
+          <hr>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0" id="studentTable">
+            <thead class="table-primary">
+              <tr>
+                <th>#</th>
+                <th>የተማሪ ስም</th>
+                <th>ክፍልና ሴክሽን</th>
+                <th>ስኩል ባስ</th>
+                <th>የሚጠበቅ ክፍያ (Total Due)</th>
+                <th>የተከፈለ (Paid)</th>
+                <th>ቀሪ (Remaining)</th>
+                <th>ትራንዛክሽን (FT)</th>
+                <th>ሁኔታ</th>
+                <th class="no-print text-center">ተግባር / Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in student_data %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td class="fw-bold text-dark">{{ item.student.full_name }}</td>
+                <td><span class="badge bg-primary">{{ item.student.grade }} ({{ item.student.section }})</span></td>
+                <td>
+                  {% if item.bus_addon > 0 %}
+                    <span class="badge bg-info text-dark"><i class="bi bi-bus-front me-1"></i>እፈልጋለሁ (+{{ "{:,.0f}".format(item.bus_addon) }})</span>
+                  {% else %}
+                    <span class="badge bg-light text-dark">አልፈልግም</span>
+                  {% endif %}
+                </td>
+                <td class="fw-bold text-dark">{{ "{:,.2f}".format(item.expected) }} ETB</td>
+                <td class="fw-bold text-success">{{ "{:,.2f}".format(item.paid) }} ETB</td>
+                <td class="fw-bold text-danger">{{ "{:,.2f}".format(item.remaining) }} ETB</td>
+                <td><code class="fw-bold text-dark">{{ item.student.ft_approval_no }}</code></td>
+                <td>
+                  {% if item.student.status == 'Approved' %}
+                    <span class="badge bg-success">Approved</span>
+                  {% elif item.student.status == 'Rejected' %}
+                    <span class="badge bg-danger">Rejected</span>
+                  {% else %}
+                    <span class="badge bg-warning text-dark">Pending</span>
+                  {% endif %}
+                </td>
+                <td class="no-print text-center">
+                  <a href="/receipt/{{ item.student.id }}" target="_blank" class="btn btn-sm btn-outline-primary me-1" title="የግል ደረሰኝ አትም">
+                    🖨️ Receipt
+                  </a>
+                  {% if item.student.status != 'Approved' %}
+                    <a href="/approve_student/{{ item.student.id }}" class="btn btn-sm btn-success me-1" title="አረጋግጥ">✓</a>
+                  {% endif %}
+                  {% if item.student.status != 'Rejected' %}
+                    <a href="/reject_student/{{ item.student.id }}" class="btn btn-sm btn-warning me-1" title="ሰርዝ">✕</a>
+                  {% endif %}
+                  <a href="/delete_student/{{ item.student.id }}" class="btn btn-sm btn-danger" onclick="return confirm('እርግጠኛ ነዎት?')" title="አጥፋ">🗑️</a>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="10" class="text-center py-4 text-muted">ምንም የተመዘገበ ተማሪ የለም።</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="print-footer">
+          @KiyyaWebDeveloper...0930108996
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CHANGE PASSWORD MODAL -->
+  <div class="modal fade no-print" id="changePwModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title fw-bold"><i class="bi bi-shield-lock me-2"></i>የAdmin ፓስወርድ መቀየሪያ</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <form action="/change_password" method="POST">
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label fw-bold">የድሮ ፓስወርድ (Old Password)</label>
+              <input type="password" name="old_password" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">አዲስ ፓስወርድ (New Password)</label>
+              <input type="password" name="new_password" class="form-control" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ሰርዝ</button>
+            <button type="submit" class="btn btn-primary fw-bold">💾 ቀይር (Save)</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("currentDate").innerText = new Date().toLocaleDateString();
+
+    function filterTable() {
+      let input = document.getElementById("tableSearch").value.toLowerCase();
+      let trs = document.querySelectorAll("#studentTable tbody tr");
+      trs.forEach(tr => {
+        let text = tr.textContent.toLowerCase();
+        tr.style.display = text.includes(input) ? "" : "none";
+      });
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

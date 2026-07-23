@@ -44,6 +44,11 @@ class Setting(db.Model):
     term_fee = db.Column(db.Float, default=8000.0)
     class_capacity = db.Column(db.Integer, default=30)
     default_address = db.Column(db.String(200), default="አቃቂ ቃሊቲ ወረዳ 09")
+    # Payment Account Numbers
+    cbo_acc = db.Column(db.String(100), default="1000123456789 (Coop Bank)")
+    cbe_acc = db.Column(db.String(100), default="1000987654321 (CBE)")
+    telebirr_acc = db.Column(db.String(100), default="0911000000 (Telebirr)")
+    awash_acc = db.Column(db.String(100), default="0132000000000 (Awash Bank)")
 
 # Initialize Database
 with app.app_context():
@@ -60,7 +65,11 @@ with app.app_context():
             monthly_fee=3000.0, 
             term_fee=8000.0, 
             class_capacity=30,
-            default_address="አቃቂ ቃሊቲ ወረዳ 09"
+            default_address="አቃቂ ቃሊቲ ወረዳ 09",
+            cbo_acc="1000123456789 (Coop Bank)",
+            cbe_acc="1000987654321 (CBE)",
+            telebirr_acc="0911000000 (Telebirr)",
+            awash_acc="0132000000000 (Awash Bank)"
         )
         db.session.add(default_settings)
         db.session.commit()
@@ -198,7 +207,7 @@ def admin_dashboard():
                            total_unpaid=total_unpaid,
                            total_students=len(students))
 
-# --- Separate System Settings & Password Page ---
+# --- System Settings Page ---
 @app.route('/settings')
 def settings_page():
     if 'user_id' not in session:
@@ -221,6 +230,13 @@ def update_settings():
     settings.term_fee = float(request.form.get('term_fee'))
     settings.class_capacity = int(request.form.get('class_capacity'))
     settings.default_address = request.form.get('default_address')
+    
+    # Update Payment Accounts
+    settings.cbo_acc = request.form.get('cbo_acc')
+    settings.cbe_acc = request.form.get('cbe_acc')
+    settings.telebirr_acc = request.form.get('telebirr_acc')
+    settings.awash_acc = request.form.get('awash_acc')
+
     db.session.commit()
     
     flash('ቅንብሮች በስኬት ተቀይረዋል!', 'success')

@@ -2,113 +2,121 @@
 <html lang="am">
 <head>
   <meta charset="UTF-8">
-  <title>የተማሪዎች ምዝገባ</title>
+  <title>የተማሪዎች ኦንላይን ምዝገባ</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
 
-  <div class="container my-5" style="max-width: 750px;">
-    
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2>🎓 የተማሪዎች ምዝገባ ቅጽ</h2>
-      <a href="/login" class="btn btn-outline-primary btn-sm">Admin Login</a>
-    </div>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-            {{ message }}
-          </div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
-
-    <div class="card shadow-sm">
+  <div class="container my-5" style="max-width: 650px;">
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white text-center py-3">
+        <h4>🏫 የተማሪዎች ምዝገባ ቅፅ</h4>
+      </div>
       <div class="card-body p-4">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
         <form action="/add_student" method="POST">
-          
           <div class="mb-3">
-            <label class="form-label">ሙሉ ስም (Full Name)</label>
-            <input type="text" name="full_name" class="form-control" required placeholder="የተማሪው ሙሉ ስም">
-          </div>
-
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label class="form-label">ክፍል (Grade)</label>
-              <input type="text" name="grade" class="form-control" required placeholder="ምሳሌ፡ 3ኛ">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">ስልክ ቁጥር (Phone Number)</label>
-              <input type="text" name="phone" class="form-control" placeholder="0911...">
-            </div>
+            <label class="form-label fw-bold">የተማሪው ሙሉ ስም</label>
+            <input type="text" name="full_name" class="form-control" required placeholder="ለምሳሌ፡ አበበ ከበደ">
           </div>
 
           <div class="mb-3">
-            <label class="form-label">አድራሻ (Address)</label>
-            <input type="text" name="address" class="form-control" value="{{ settings.default_address if settings and settings.default_address else '' }}" placeholder="ክፍለ ከተማ / ወረዳ / የቤት ቁጥር">
+            <label class="form-label fw-bold">ክፍል (Grade)</label>
+            <select name="grade" class="form-select" required>
+              <option value="">ክፍል ይምረጡ...</option>
+              <option value="Grade 1">Grade 1</option>
+              <option value="Grade 2">Grade 2</option>
+              <option value="Grade 3">Grade 3</option>
+              <option value="Grade 4">Grade 4</option>
+              <option value="Grade 5">Grade 5</option>
+              <option value="Grade 6">Grade 6</option>
+              <option value="Grade 7">Grade 7</option>
+              <option value="Grade 8">Grade 8</option>
+            </select>
           </div>
 
-          <div class="row mb-3">
-            <div class="col-md-4">
-              <label class="form-label">የክፍያ መንገድ</label>
-              <select name="payment_method" class="form-select">
-                <option value="CBE">CBE (ንግድ ባንክ)</option>
-                <option value="Telebirr">Telebirr (ቴሌብር)</option>
-                <option value="Dashen Bank">Dashen Bank</option>
-                <option value="Awash Bank">Awash Bank</option>
-                <option value="Bank of Abyssinia">Abyssinia Bank</option>
-                <option value="Cash">Cash (በጥሬ ገንዘብ)</option>
-              </select>
-            </div>
-
-            <div class="col-md-4">
-              <label class="form-label">የክፍያ አይነት</label>
-              <select name="payment_type" id="paymentTypeSelect" class="form-select" onchange="updateAmount()">
-                <option value="Monthly (1 Month)">ወርሃዊ (Monthly)</option>
-                <option value="Term (3 Months)">ተርም (Term - 3 Months)</option>
-              </select>
-            </div>
-
-            <div class="col-md-4">
-              <label class="form-label">የሚጠበቅ ክፍያ (ETB)</label>
-              <input type="text" id="amountDisplay" class="form-control fw-bold text-primary" value="{{ settings.monthly_fee if settings else '3000' }} ETB" readonly>
-            </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">የወላጅ/የተማሪ ስልክ ቁጥር</label>
+            <input type="tel" name="phone" class="form-control" required placeholder="0911......">
           </div>
 
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label class="form-label fw-bold text-success">አሁን የከፈሉት መጠን (ETB)</label>
-              <input type="number" step="0.01" name="amount_paid" id="amountPaidInput" class="form-control border-success fw-bold" value="{{ settings.monthly_fee if settings else 3000 }}" required>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">FT / Reference Approval No.</label>
-              <input type="text" name="ft_approval_no" class="form-control" placeholder="ምሳሌ፡ FT240723XXXX" required>
-            </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">አድራሻ</label>
+            <input type="text" name="address" class="form-control" value="{{ settings.default_address if settings else 'አቃቂ ቃሊቲ ወረዳ 09' }}" required>
           </div>
 
-          <button type="submit" class="btn btn-success w-100 btn-lg mt-3">መዝግብ</button>
+          <div class="mb-3">
+            <label class="form-label fw-bold">የክፍያ አይነት (Payment Option)</label>
+            <select name="payment_type" class="form-select" required>
+              <option value="Monthly (1 Month)">የወር ክፍያ ({{ "{:,.2f}".format(settings.monthly_fee) if settings else '3,000' }} ETB)</option>
+              <option value="Term (3 Months)">የተርም ክፍያ ({{ "{:,.2f}".format(settings.term_fee) if settings else '8,000' }} ETB)</option>
+            </select>
+          </div>
+
+          <!-- PAYMENT METHOD DROPDOWN -->
+          <div class="mb-3">
+            <label class="form-label fw-bold">የከፈሉበት መንገድ (Payment Method)</label>
+            <select name="payment_method" id="payment_method_select" class="form-select" onchange="showAccountInfo()" required>
+              <option value="">የክፍያ መንገድ ይምረጡ...</option>
+              <option value="CBO">CBO (Cooperative Bank of Oromia)</option>
+              <option value="CBE">CBE (Commercial Bank of Ethiopia)</option>
+              <option value="Telebirr">Telebirr</option>
+              <option value="Awash Bank">Awash Bank</option>
+              <option value="Cash">በጥሬ ገንዘብ (Cash)</option>
+            </select>
+          </div>
+
+          <!-- DYNAMIC ACCOUNT NUMBER DISPLAY BOX -->
+          <div id="account_info_box" class="alert alert-info d-none" role="alert">
+            <strong id="account_label">የባንክ ሂሳብ ቁጥር፦</strong>
+            <h5 class="mb-0 mt-1 fw-bold text-primary" id="account_number_text"></h5>
+            <small class="text-muted">እባክዎ በዚህ ቁጥር ገቢ ካደረጉ በኋላ የደረሰኝ ቁጥር (FT Ref) ከታች ያስገቡ።</small>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">የደረሰኝ ቁጥር (FT / Transaction Ref No.)</label>
+            <input type="text" name="ft_approval_no" class="form-control" required placeholder="ለምሳሌ፡ FT2407XXXXXX">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">የከፈሉት የገንዘብ መጠን (Amount Paid in ETB)</label>
+            <input type="number" step="0.01" name="amount_paid" class="form-control" required placeholder="ለምሳሌ፡ 3000">
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">ምዝገባውን አጠናቅ</button>
         </form>
       </div>
     </div>
-
   </div>
 
   <script>
-    const monthlyFee = {{ settings.monthly_fee if settings else 3000 }};
-    const termFee = {{ settings.term_fee if settings else 8000 }};
+    const accounts = {
+      "CBO": "{{ settings.cbo_acc if settings else '' }}",
+      "CBE": "{{ settings.cbe_acc if settings else '' }}",
+      "Telebirr": "{{ settings.telebirr_acc if settings else '' }}",
+      "Awash Bank": "{{ settings.awash_acc if settings else '' }}"
+    };
 
-    function updateAmount() {
-      const selected = document.getElementById('paymentTypeSelect').value;
-      const display = document.getElementById('amountDisplay');
-      const paidInput = document.getElementById('amountPaidInput');
-      
-      if (selected === 'Term (3 Months)') {
-        display.value = termFee + ' ETB';
-        paidInput.value = termFee;
+    function showAccountInfo() {
+      const selected = document.getElementById("payment_method_select").value;
+      const infoBox = document.getElementById("account_info_box");
+      const numText = document.getElementById("account_number_text");
+
+      if (accounts[selected]) {
+        numText.innerText = accounts[selected];
+        infoBox.classList.remove("d-none");
       } else {
-        display.value = monthlyFee + ' ETB';
-        paidInput.value = monthlyFee;
+        infoBox.classList.add("d-none");
       }
     }
   </script>

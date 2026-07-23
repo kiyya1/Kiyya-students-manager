@@ -24,13 +24,15 @@
       {% endif %}
     {% endwith %}
 
-    <!-- SYSTEM SETTINGS CARD -->
+    <!-- SYSTEM SETTINGS & PAYMENT ACCOUNTS FORM -->
     <div class="card shadow-sm mb-4">
       <div class="card-header bg-dark text-white">
-        <h5 class="mb-0">⚙️ የሲስተም ቅንብሮች (Fee & Capacity Settings)</h5>
+        <h5 class="mb-0">⚙️ የሲስተም እና የባንክ ሂሳብ ቁጥሮች ቅንብር</h5>
       </div>
       <div class="card-body">
         <form action="/update_settings" method="POST" class="row g-3">
+          
+          <h6 class="text-primary fw-bold mb-0 mt-3">💵 የክፍያ እና የአቅም ቅንብሮች</h6>
           <div class="col-md-6">
             <label class="form-label">የወር ክፍያ (ETB)</label>
             <input type="number" step="0.01" name="monthly_fee" class="form-control" value="{{ settings.monthly_fee if settings else 3000 }}" required>
@@ -47,7 +49,28 @@
             <label class="form-label">Default አድራሻ</label>
             <input type="text" name="default_address" class="form-control" value="{{ settings.default_address if settings and settings.default_address else 'አቃቂ ቃሊቲ ወረዳ 09' }}" required>
           </div>
-          <div class="col-md-12 text-end mt-3">
+
+          <hr class="my-4">
+
+          <h6 class="text-primary fw-bold mb-0">🏦 ለተማሪዎች የሚታዩ የባንክ ሂሳብ ቁጥሮች (Bank Accounts)</h6>
+          <div class="col-md-6">
+            <label class="form-label">CBO Account No.</label>
+            <input type="text" name="cbo_acc" class="form-control" value="{{ settings.cbo_acc if settings else '' }}" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">CBE Account No.</label>
+            <input type="text" name="cbe_acc" class="form-control" value="{{ settings.cbe_acc if settings else '' }}" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Telebirr Account / Phone No.</label>
+            <input type="text" name="telebirr_acc" class="form-control" value="{{ settings.telebirr_acc if settings else '' }}" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Awash Bank Account No.</label>
+            <input type="text" name="awash_acc" class="form-control" value="{{ settings.awash_acc if settings else '' }}" required>
+          </div>
+
+          <div class="col-md-12 text-end mt-4">
             <button type="submit" class="btn btn-primary px-4 fw-bold">ቅንብሩን አድስ (Save Settings)</button>
           </div>
         </form>

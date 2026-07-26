@@ -19,9 +19,9 @@ if getattr(sys, 'frozen', False):
 else:
     app = Flask(__name__)
 
-app.secret_key = 'kiyya_secret_key_change_this'
+app.secret_key = os.environ.get('SECRET_KEY', 'kiyya_secret_key_change_this')
 
-# Database Configuration
+# Database Configuration (Refresh ቢደረግም መረጃ በቋሚነት እንዲቀመጥ ያደርጋል)
 db_url = os.environ.get('DATABASE_URL', 'sqlite:///students.db')
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
@@ -305,10 +305,8 @@ def open_browser():
 
 if __name__ == '__main__':
     if getattr(sys, 'frozen', False):
-        # PyInstaller EXE ሆኖ ሲከፈት በራሱ ብራውዘር ይከፍታል
         Timer(1.2, open_browser).start()
         app.run(port=5000, debug=False)
     else:
-        # Normal Server Development Mode
         port = int(os.environ.get('PORT', 5000))
         app.run(host='0.0.0.0', port=port, debug=True)

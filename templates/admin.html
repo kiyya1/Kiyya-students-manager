@@ -3,256 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>አድሚን ዳሽቦርድ — Wabi School</title>
+    <title>Admin Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
-        body {
-            background-color: #f4f6f9;
-            color: #212529;
-            transition: background-color 0.3s, color 0.3s;
-        }
-        .card {
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            transition: background-color 0.3s, border-color 0.3s;
-        }
-        /* --- DARK MODE STYLES --- */
-        body.dark-mode {
-            background-color: #121212 !important;
-            color: #e0e0e0 !important;
-        }
-        body.dark-mode .card,
-        body.dark-mode .modal-content {
-            background-color: #1e1e1e !important;
-            color: #ffffff !important;
-            border-color: #333333 !important;
-        }
-        body.dark-mode .table {
-            color: #e0e0e0 !important;
-            border-color: #333333 !important;
-        }
-        body.dark-mode .table th {
-            background-color: #252525 !important;
-            color: #00d2ff !important;
-            border-color: #333333 !important;
-        }
-        body.dark-mode .table td {
-            background-color: #1e1e1e !important;
-            color: #e0e0e0 !important;
-            border-color: #333333 !important;
-        }
-        body.dark-mode .form-control,
-        body.dark-mode .form-select {
-            background-color: #2d2d2d !important;
-            color: #ffffff !important;
-            border-color: #444444 !important;
-        }
-        body.dark-mode .text-muted {
-            color: #aaa !important;
-        }
-        .theme-toggle-btn {
-            cursor: pointer;
-            font-size: 1.2rem;
-            border: none;
-            background: transparent;
-        }
+        body { background: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .card-custom { border-radius: 12px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
     </style>
 </head>
-<body>
+<body class="py-4">
 
-    <!-- Admin Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 shadow-sm mb-4">
-        <a class="navbar-brand fw-bold fs-4" href="/admin">🎓 Wabi School Admin</a>
-        <div class="ms-auto d-flex align-items-center">
-            <button id="themeToggle" class="theme-toggle-btn text-white me-3" title="Toggle Dark/Light Mode">🌙</button>
-            <a href="/export_excel" class="btn btn-success btn-sm me-2">📊 Export Excel</a>
-            <button class="btn btn-outline-light btn-sm me-2" data-bs-toggle="modal" data-bs-target="#settingsModal">⚙️ ቅንብሮች</button>
-            <button class="btn btn-outline-warning btn-sm me-2" data-bs-toggle="modal" data-bs-target="#passwordModal">🔑 የይለፍ ቃል ቀይር</button>
-            <a href="/logout" class="btn btn-danger btn-sm">ውጣ (Logout)</a>
+<div class="container-fluid px-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm">
+        <h3 class="fw-bold text-primary mb-0"><i class="bi bi-speedometer2 me-2"></i>Admin Dashboard</h3>
+        <div>
+            <span class="me-3 fw-bold"><i class="bi bi-person-circle me-1"></i>{{ session['username'] }}</span>
+            <a href="/logout" class="btn btn-outline-danger btn-sm"><i class="bi bi-box-arrow-right me-1"></i>ውጣ (Logout)</a>
         </div>
-    </nav>
-
-    <div class="container-fluid px-4 pb-5">
-
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show mb-4" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        <!-- Top Summary Cards -->
-        <div class="row g-3 mb-4">
-            <div class="col-md-3">
-                <div class="card p-3 border-start border-primary border-4">
-                    <span class="text-muted small fw-bold">ጠቅላላ የተመዘገቡ ተማሪዎች</span>
-                    <h3 class="fw-bold mb-0 text-primary">{{ total_students }}</h3>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card p-3 border-start border-info border-4">
-                    <span class="text-muted small fw-bold">የሚጠበቅ ጠቅላላ ገቢ</span>
-                    <h3 class="fw-bold mb-0 text-info">{{ "{:,.2f}".format(total_expected) }} ETB</h3>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card p-3 border-start border-success border-4">
-                    <span class="text-muted small fw-bold">የተሰበሰበ ገቢ</span>
-                    <h3 class="fw-bold mb-0 text-success">{{ "{:,.2f}".format(total_paid) }} ETB</h3>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card p-3 border-start border-danger border-4">
-                    <span class="text-muted small fw-bold">ቀሪ ያልተከፈለ ገቢ</span>
-                    <h3 class="fw-bold mb-0 text-danger">{{ "{:,.2f}".format(total_unpaid) }} ETB</h3>
-                </div>
-            </div>
-        </div>
-
-        <!-- Student List Table -->
-        <div class="card p-4 mb-4">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="fw-bold mb-0">📋 የተመዘገቡ ተማሪዎች ዝርዝር</h5>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead>
-                        <tr>
-                            <th>ተ.ቁ</th>
-                            <th>ሙሉ ስም</th>
-                            <th>ክፍል & ሴክሽን</th>
-                            <th>ስልክ ቁጥር</th>
-                            <th>ባስ</th>
-                            <th>FT ቁጥር</th>
-                            <th>የተከፈለ</th>
-                            <th>ቀሪ</th>
-                            <th>ሁኔታ</th>
-                            <th>እርምጃዎች</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in student_data %}
-                        <tr>
-                            <td>{{ item.student.id }}</td>
-                            <td class="fw-bold">{{ item.student.full_name }}</td>
-                            <td><span class="badge bg-secondary">{{ item.student.grade }} - {{ item.student.section }}</span></td>
-                            <td>{{ item.student.phone }}</td>
-                            <td>{{ item.student.bus_service }}</td>
-                            <td><code>{{ item.student.ft_approval_no or '-' }}</code></td>
-                            <td class="text-success fw-bold">{{ "{:,.2f}".format(item.paid) }}</td>
-                            <td class="text-danger fw-bold">{{ "{:,.2f}".format(item.remaining) }}</td>
-                            <td>
-                                {% if item.student.status == 'Approved' %}
-                                    <span class="badge bg-success">Approved</span>
-                                {% elif item.student.status == 'Rejected' %}
-                                    <span class="badge bg-danger">Rejected</span>
-                                {% else %}
-                                    <span class="badge bg-warning text-dark">Pending</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <a href="/approve_student/{{ item.student.id }}" class="btn btn-sm btn-outline-success">✓</a>
-                                <a href="/reject_student/{{ item.student.id }}" class="btn btn-sm btn-outline-warning">✗</a>
-                                <a href="/delete_student/{{ item.student.id }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('እርግጠኛ ነዎት ተማሪውን ማጥፋት ይፈልጋሉ?')">🗑️</a>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="10" class="text-center py-4 text-muted">እስካሁን ምንም የተመዘገበ ተማሪ የለም።</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
     </div>
 
-    <!-- Settings Modal -->
-    <div class="modal fade" id="settingsModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form action="/update_settings" method="POST">
-                    <div class="modal-header">
-                        <h5 class="modal-title fw-bold">⚙️ የክፍያ እና የክፍል አቅም ቅንብሮች</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm mb-4" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="row g-4 mb-4">
+        <!-- Update Rates Card -->
+        <div class="col-md-6">
+            <div class="card card-custom p-3">
+                <h5 class="fw-bold text-primary mb-3"><i class="bi bi-cash-coin me-2"></i>ቋሚ ክፍያዎችን ማሻሻያ (Edit Default Fees)</h5>
+                <form action="/update_fees" method="POST" class="row g-3">
+                    <div class="col-6">
+                        <label class="form-label small fw-bold">ወርሃዊ ትምህርት ክፍያ (ETB)</label>
+                        <input type="number" step="0.01" name="tuition_fee" value="{{ tuition_fee }}" class="form-control" required>
                     </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">የወር ክፍያ (Monthly Fee)</label>
-                            <input type="number" step="0.01" name="monthly_fee" class="form-control" value="{{ settings.monthly_fee if settings else 3000 }}">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">የታርም ክፍያ (Term Fee)</label>
-                            <input type="number" step="0.01" name="term_fee" class="form-control" value="{{ settings.term_fee if settings else 8000 }}">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">የባስ ክፍያ (Bus Fee)</label>
-                            <input type="number" step="0.01" name="bus_fee" class="form-control" value="{{ settings.bus_fee if settings else 1500 }}">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">የአንድ ክፍል አቅም (Class Capacity)</label>
-                            <input type="number" name="class_capacity" class="form-control" value="{{ settings.class_capacity if settings else 30 }}">
-                        </div>
+                    <div class="col-6">
+                        <label class="form-label small fw-bold">ወርሃዊ የባስ ክፍያ (ETB)</label>
+                        <input type="number" step="0.01" name="bus_fee" value="{{ bus_fee }}" class="form-control" required>
                     </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary fw-bold">ቅንብሮችን መዝግብ</button>
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-sm btn-success fw-bold">አሻሽል (Save Rates)</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Change Password Card -->
+        <div class="col-md-6">
+            <div class="card card-custom p-3">
+                <h5 class="fw-bold text-primary mb-3"><i class="bi bi-key-fill me-2"></i>የይለፍ ቃል መቀየሪያ (Change Password)</h5>
+                <form action="/change_password" method="POST" class="row g-3">
+                    <div class="col-6">
+                        <input type="password" name="old_password" class="form-control form-control-sm" placeholder="የድሮ ይለፍ ቃል" required>
+                    </div>
+                    <div class="col-6">
+                        <input type="password" name="new_password" class="form-control form-control-sm" placeholder="አዲስ ይለፍ ቃል" required>
+                    </div>
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-sm btn-warning fw-bold">ቀይር (Update Password)</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Password Modal -->
-    <div class="modal fade" id="passwordModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form action="/change_password" method="POST">
-                    <div class="modal-header">
-                        <h5 class="modal-title fw-bold">🔑 የይለፍ ቃል መቀየሪያ</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">የድሮ የይለፍ ቃል</label>
-                            <input type="password" name="old_password" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">አዲስ የይለፍ ቃል</label>
-                            <input type="password" name="new_password" class="form-control" required>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-warning fw-bold">የይለፍ ቃል ቀይር</button>
-                    </div>
-                </form>
-            </div>
+    <!-- Registered Students Table -->
+    <div class="card card-custom p-4 bg-white">
+        <h5 class="fw-bold text-primary mb-3"><i class="bi bi-people-fill me-2"></i>የተመዘገቡ ተማሪዎች ዝርዝር</h5>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>ሙሉ ስም</th>
+                        <th>ክፍል & Section</th>
+                        <th>ስልክ</th>
+                        <th>የባስ አገልግሎት</th>
+                        <th>ጠቅላላ ሂሳብ</th>
+                        <th>የተከፈለው</th>
+                        <th>ቀሪ ሂሳብ</th>
+                        <th>እርምጃዎች</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr>
+                        <td>{{ student.id }}</td>
+                        <td class="fw-bold">{{ student.full_name }}</td>
+                        <td><span class="badge bg-info text-dark">{{ student.grade }} ({{ student.section }})</span></td>
+                        <td>{{ student.phone }}</td>
+                        <td>
+                            {% if 'Yes' in student.bus_service or 'እፈልጋለሁ' in student.bus_service %}
+                                <span class="badge bg-success">አለው</span>
+                            {% else %}
+                                <span class="badge bg-secondary">የለውም</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ student.total_expected }} ETB</td>
+                        <td class="text-success fw-bold">{{ student.amount_paid }} ETB</td>
+                        <td class="text-danger fw-bold">{{ student.balance_due }} ETB</td>
+                        <td>
+                            <a href="/receipt/{{ student.id }}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-printer-fill"></i> Receipt</a>
+                            <a href="/delete_student/{{ student.id }}" onclick="return confirm('እርግጠኛ ነህ ይሄንን ተማሪ ማጥፋት ትፈልጋለህ?')" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash-fill"></i></a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted">ምንም የተመዘገበ ተማሪ አልተገኘም።</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        const themeToggleBtn = document.getElementById('themeToggle');
-        
-        // 1. የቀደመውን Dark Mode ምርጫ ከ localStorage ማንበብ
-        if (localStorage.getItem('theme') === 'dark') {
-            document.body.classList.add('dark-mode');
-            if (themeToggleBtn) themeToggleBtn.textContent = '☀️';
-        }
+</div>
 
-        // 2. ቁልፉ ሲጫን ሞዱን መቀየር
-        if (themeToggleBtn) {
-            themeToggleBtn.addEventListener('click', () => {
-                document.body.classList.toggle('dark-mode');
-                const isDark = document.body.classList.contains('dark-mode');
-                localStorage.setItem('theme', isDark ? 'dark' : 'light');
-                themeToggleBtn.textContent = isDark ? '☀️' : '🌙';
-            });
-        }
-    </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
